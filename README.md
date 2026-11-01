@@ -34,6 +34,7 @@ To turn the agent on, set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` as secre
 - `app/checks.py`: checks official sources live and confirms each quoted rule clause is still on its source page. Results are cached for 5 minutes.
 - `streamlit_app.py`: the web app. `app/main.py` serves the same checks as a FastAPI endpoint, for Docker hosts.
 
+- `docs/PITCH.md`: the problem, audience, USP and comparison, with sources.
 - `app/wizard.py`: the guided first screen, one question at a time.
 - `app/clocks.py`: the live two-clock first screen, driven by the rules engine.
 - `app/extras.py`: fake recovery-agent checker, evidence fingerprints and calendar reminders.

@@ -317,6 +317,10 @@ with rules_tab:
         st.warning("The RBI feed could not be reached just now.")
 
 with judges_tab:
+    st.subheader("Why this matters")
+    st.write("More than 65.89 lakh financial fraud complaints and more than Rs 55,050 crore reported on the national portal, 2021 to 2025, with more than Rs 8,189 crore marked as lien ([PIB, 21 July 2026](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2287039&reg=48&lang=2)). From 1 January 2027, compensation for small frauds needs reports to both the bank and the police route within five calendar days ([RBI, paragraph 76T](https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0)).")
+    st.write("**Other tools help you write a complaint. Wapsi protects your compensation.** We found no other tool that tracks both clocks using RBI's rules. The official portal and 1930 remain the only places to file.")
+    st.subheader("Try it")
     st.write("A three-minute walk through the live app. No login needed.")
     for number, step in enumerate(
         [
