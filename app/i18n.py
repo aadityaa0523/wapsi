@@ -2,10 +2,20 @@ LANGUAGES = ["English", "हिन्दी", "తెలుగు"]
 
 # Safety-critical messages only. The rest of the app is in English for now.
 TEXT = {
-    "pitch": {
-        "English": "**From 1 January 2027, reporting cyber fraud to only one place can cost you your compensation.** Wapsi tracks the bank route and the police route together, by the rules for your date, and keeps a record of each step.",
-        "हिन्दी": "**1 जनवरी 2027 से, साइबर धोखाधड़ी की शिकायत सिर्फ़ एक जगह करने पर आपका मुआवज़ा जा सकता है।** Wapsi बैंक और पुलिस, दोनों रास्तों पर नज़र रखता है।",
-        "తెలుగు": "**2027 జనవరి 1 నుండి, సైబర్ మోసాన్ని ఒకే చోట ఫిర్యాదు చేస్తే మీ పరిహారం పోవచ్చు.** Wapsi బ్యాంకు, పోలీసు రెండు మార్గాలనూ గమనిస్తుంది.",
+    "hero_title": {
+        "English": "Miss one report, and you can lose your compensation.",
+        "हिन्दी": "एक रिपोर्ट छूटी, तो मुआवज़ा जा सकता है।",
+        "తెలుగు": "ఒక్క ఫిర్యాదు తప్పితే, పరిహారం పోవచ్చు.",
+    },
+    "hero_sub": {
+        "English": "From 1 January 2027, compensation for small cyber frauds needs reports to both your bank and the police within 5 days. Wapsi tracks both. You stay in control.",
+        "हिन्दी": "1 जनवरी 2027 से, छोटी साइबर धोखाधड़ी के मुआवज़े के लिए बैंक और पुलिस, दोनों को 5 दिनों में बताना ज़रूरी है। Wapsi दोनों पर नज़र रखता है।",
+        "తెలుగు": "2027 జనవరి 1 నుండి, చిన్న సైబర్ మోసాల పరిహారం కోసం బ్యాంకు, పోలీసు రెండింటికీ 5 రోజుల్లో చెప్పాలి. Wapsi రెండింటినీ గమనిస్తుంది.",
+    },
+    "hero_cta": {
+        "English": "Check my deadline",
+        "हिन्दी": "मेरी समय-सीमा देखें",
+        "తెలుగు": "నా గడువు చూడండి",
     },
     "emergency": {
         "English": "**Fraud in the last few hours? Call 1930 now and tell your bank.** Do this before anything else here.",

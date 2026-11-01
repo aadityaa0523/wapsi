@@ -51,8 +51,8 @@ def agent_call_allowed():
 st.set_page_config(page_title="Wapsi - Cyber Fraud Recovery Assistant", layout="centered")
 ui.page_style()
 language = st.radio("Language", LANGUAGES, horizontal=True, label_visibility="collapsed")
-st.write(TEXT["pitch"][language])
 st.error(TEXT["emergency"][language])
+ui.hero(language)
 st.caption(TEXT["disclaimer"][language])
 
 st.markdown('<div class="wp-section">One missing report can cost you your compensation</div>', unsafe_allow_html=True)
@@ -62,7 +62,7 @@ st.markdown('<div class="wp-section">How Wapsi works</div>', unsafe_allow_html=T
 ui.how_it_works()
 st.markdown('<div class="wp-section">Checked against official sources</div>', unsafe_allow_html=True)
 ui.stats(live_status())
-st.markdown('<div class="wp-section">Start here</div>', unsafe_allow_html=True)
+st.markdown('<div class="wp-section" id="start-here">Start here</div>', unsafe_allow_html=True)
 
 today = datetime.now(IST).date()
 case_tab, kit_tab, rejected_tab, rules_tab, judges_tab = st.tabs(["My case", "Filing kit", "Bank rejected me", "Live rules", "For judges"])

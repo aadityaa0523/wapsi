@@ -82,3 +82,9 @@ def test_coercion_ground_is_not_offered_under_old_rules():
 
 def test_two_report_table_comes_from_the_engine():
     assert [amount for _, amount in rights.two_report_scenarios()] == [8500, 0, 0, 0]
+
+
+def test_every_message_exists_in_all_languages():
+    from app.i18n import LANGUAGES, TEXT
+
+    assert all(TEXT[key].get(language) for key in TEXT for language in LANGUAGES)
