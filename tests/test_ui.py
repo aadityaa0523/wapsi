@@ -34,4 +34,4 @@ def test_form_shows_rights(monkeypatch):
     app.selectbox[0].set_value("I shared an OTP, PIN or password")
     app.button[0].click().run()
     assert not app.exception
-    assert "until you report" in app.info[0].value
+    assert any("until you report" in info.value for info in app.info)

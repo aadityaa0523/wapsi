@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 
-from app import checks, rights
+from app import agent, checks, rights
 from app.safety import SecretBlocked, append_event, chain_is_valid, sanitize, triage
 
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -33,6 +33,7 @@ st.caption("Not legal advice. Wapsi cannot promise that you will get money back.
 today = datetime.now(IST).date()
 story = st.text_area("What happened? (optional)", max_chars=4000)
 level = "normal"
+clean = None
 if story:
     try:
         clean = sanitize(story)
@@ -47,10 +48,36 @@ if level == "crisis":
 if level == "ongoing":
     st.error("**Hang up now.** Police never arrest anyone over a video call, and no real officer asks you to pay. Do not send more money. Then call 1930.")
 
+if not agent.configured():
+    st.info("The AI agent is off because no LLM key is set. The rules below still work.")
+else:
+    st.caption("If you use the agent or get drafts, your story goes to an AI provider after your identifiers are masked. Leave the story empty to avoid this.")
+if agent.configured() and clean and level == "normal" and st.button("Let the agent read my story"):
+    with st.status("Agent working") as steps:
+        st.write("Checked your text for secrets and masked your identifiers.")
+        try:
+            st.session_state["classified"] = agent.classify(clean)
+            st.write("Classified the fraud. Plain code, not the AI, decides your deadlines and amounts.")
+            log_event("Agent classified the story")
+            steps.update(state="complete")
+        except agent.AgentError:
+            st.session_state.pop("classified", None)
+            log_event("Agent classification failed")
+            steps.update(label="The agent is unavailable. Choose below and the rules will still work.", state="error")
+
+classified = st.session_state.get("classified")
+suggested = 0
+if classified:
+    st.write(f"**Agent's reading:** {classified['fraud_type']} (confidence: {classified['confidence']}). Please check the choice below.")
+    if classified["question"]:
+        st.warning(classified["question"])
+    if classified["fault"] in FAULTS.values():
+        suggested = list(FAULTS.values()).index(classified["fault"])
+
 with st.form("case"):
     txn = st.date_input("Date of the transaction", value=today, max_value=today)
     loss = st.number_input("Amount lost (Rs)", min_value=1, value=None, step=1)
-    fault = st.selectbox("What best describes it?", FAULTS)
+    fault = st.selectbox("What best describes it?", FAULTS, index=suggested)
     account = st.selectbox("Account type", rights.LIABILITY_CAPS)
     alert = st.date_input("Date the bank's message reached you, if any", value=None, max_value=today)
     bank_report = st.date_input("Date you reported to the bank, if done", value=None, max_value=today)
@@ -75,6 +102,17 @@ if submitted:
         if txn < rights.NEW_REGIME:
             st.caption("Rules change for transactions from 1 Jan 2027.")
         st.link_button("Report on cybercrime.gov.in", "https://cybercrime.gov.in/")
+        if agent.configured() and clean and level == "normal":
+            facts = {"transaction_date": txn, "loss_rupees": int(loss), "bank_alert": alert, "bank_report": bank_report, "police_report": police_report, "today": today}
+            try:
+                drafts = agent.draft_reports(clean, facts)
+                log_event("Agent drafts passed the fact check")
+                st.subheader("Drafts for you to check and send yourself")
+                st.text_area("Letter to your bank", drafts["bank_letter"], height=220)
+                st.text_area("Police complaint text", drafts["police_complaint"], height=220)
+            except agent.AgentError as error:
+                log_event("Agent drafts were rejected or unavailable")
+                st.warning(f"No draft shown, because none could be verified. {error if 'fact check' in str(error) else ''}")
 
 st.subheader("Live source check")
 status = live_status()
