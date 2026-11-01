@@ -331,6 +331,8 @@ with rules_tab:
         [{"Source": s["name"], "Reachable": s["reachable"], "Rule clause found": str(s.get("clause_verified", "n/a")), "SHA-256": s.get("sha256", s.get("error", ""))} for s in status["sources"]],
         width="stretch",
     )
+    if any(not source["reachable"] for source in status["sources"]):
+        st.caption("Some Indian government portals may refuse connections from this app's overseas host, so a timeout here does not mean the portal is down for you. Their links still open normally in your browser.")
     st.subheader("Rule Watcher")
     try:
         updates = live_rule_updates()

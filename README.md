@@ -6,7 +6,7 @@ app_port: 7860
 
 # Wapsi
 
-Cyber-fraud recovery agent for Forge '26, Theme 1, Problem 3. Work in progress: a hosted database is not built yet, and the app stops at the police portal's login (see below).
+Cyber-fraud recovery agent for Forge '26, Theme 1, Problem 3. Live app: https://waspigovt.streamlit.app/ Work in progress: a hosted database is not built yet, and the app stops at the police portal's login (see below).
 
 ```mermaid
 flowchart TD
