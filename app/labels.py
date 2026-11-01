@@ -37,6 +37,7 @@ for row in [
     ("tab_rejected", "Bank said no", "बैंक का इनकार", "బ్యాంకు నిరాకరణ"),
     ("tab_rules", "Live rules", "लाइव नियम", "లైవ్ నియమాలు"),
     ("tab_judges", "For judges", "निर्णायकों के लिए", "న్యాయనిర్ణేతలకు"),
+    ("tab_shield", "Is this a scam?", "क्या यह धोखा है?", "ఇది మోసమా?"),
     ("story", "What happened? (optional)", "क्या हुआ? (वैकल्पिक)", "ఏం జరిగింది? (ఐచ్ఛికం)"),
     ("ifsc", "Your branch IFSC (optional)", "आपकी शाखा का IFSC (वैकल्पिक)", "మీ బ్రాంచ్ IFSC (ఐచ్ఛికం)"),
     ("step_money", "1. The money", "1. पैसे की जानकारी", "1. డబ్బు వివరాలు"),

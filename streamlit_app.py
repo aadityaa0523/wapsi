@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 import streamlit as st
 
-from app import agent, checks, decoder, portal, rights, ui
+from app import agent, checks, decoder, extras, portal, rights, ui
 from app.i18n import LANGUAGES, TEXT
 from app.labels import FAULT_TEXT
 from app.safety import SecretBlocked, append_event, chain_is_valid, proof_pack, sanitize, triage
@@ -70,7 +70,7 @@ ui.stats(live_status())
 ui.section(t("start"), "main")
 
 today = datetime.now(IST).date()
-case_tab, kit_tab, rejected_tab, rules_tab, judges_tab = st.tabs([t("tab_case"), t("tab_kit"), t("tab_rejected"), t("tab_rules"), t("tab_judges")])
+case_tab, kit_tab, rejected_tab, shield_tab, rules_tab, judges_tab = st.tabs([t("tab_case"), t("tab_kit"), t("tab_rejected"), t("tab_shield"), t("tab_rules"), t("tab_judges")])
 
 with case_tab:
     story = st.text_area(t("story"), max_chars=4000)
@@ -135,6 +135,40 @@ with case_tab:
 
     preview = st.checkbox("Preview the rules from 1 January 2027, using future dates")
     latest = date(2028, 12, 31) if preview else today
+
+    with st.expander("More than one transaction or bank?"):
+        st.caption("Add each one. Each has its own clock, so Wapsi shows the safest date for reporting them all.")
+        count = st.radio("How many transactions?", [1, 2, 3, 4, 5], horizontal=True, key="transaction_count")
+        rows = []
+        for number in range(count if count > 1 else 0):
+            day_col, amount_col, bank_col = st.columns(3)
+            rows.append(
+                {
+                    "date": day_col.date_input(f"Transaction {number + 1} date", value=None, max_value=latest, key=f"row_date_{number}_{preview}"),
+                    "amount": amount_col.number_input(f"Transaction {number + 1} amount (Rs)", min_value=1, value=None, step=1, key=f"row_amount_{number}"),
+                    "bank": bank_col.text_input(f"Transaction {number + 1} bank or wallet", max_chars=60, key=f"row_bank_{number}"),
+                }
+            )
+        plan = rights.plan_transactions(rows, max([today] + [row["date"] for row in rows if row["date"]]) if preview else today)
+        if plan:
+            st.write(f"**{plan['count']} transaction(s), Rs {plan['total']:,} in total.**")
+            if plan["safe_deadline"]:
+                st.warning(f"Report them all to your bank and police by {plan['safe_deadline']:%d %b %Y} ({plan['days_left']} days left). Each transaction has its own 5-day clock, and this is the earliest.")
+            if plan["over_limit"]:
+                st.warning("If these are one complaint, the total is above the Rs 50,000 compensation limit (paragraph 76T). Your bank decides how it treats them.")
+            if plan["mixed_rules"]:
+                st.warning("Some of these fall under the old rules and some under the new ones, so check each date in the form below.")
+            if len(plan["banks"]) > 1:
+                st.info(f"Report to each bank separately: {len(plan['banks'])} banks listed.")
+
+    evidence = st.file_uploader("Fingerprint my evidence (optional)", type=extras.EVIDENCE_TYPES, accept_multiple_files=True, help="Wapsi keeps only a SHA-256 fingerprint, never the file. Add it to your Proof Pack to show that a file has not changed since now.")
+    for item in evidence or []:
+        if item.size > extras.MAX_EVIDENCE_BYTES:
+            st.warning("One file is over 10 MB and was skipped.")
+        else:
+            event = extras.evidence_event(item.getvalue(), item.type)
+            log_event(event)
+            st.caption(event)
     with st.form("case"):
         st.markdown(f'<div class="wp-group">{t("step_money")}</div>', unsafe_allow_html=True)
         txn = st.date_input(t("txn"), value=rights.NEW_REGIME if preview else today, min_value=rights.NEW_REGIME if preview else date(2017, 7, 6), max_value=latest, key=f"txn_{preview}")
@@ -153,8 +187,11 @@ with case_tab:
     if submitted:
         # the 2027 rules cannot be reached with real dates yet, so preview counts from the dates entered
         as_of = max(today, txn, alert or txn, bank_report or txn, police_report or txn) if preview else today
+        problem = rights.date_problem(txn, alert, bank_report, police_report)
         if loss is None or recovered > loss:
             st.warning("Enter the amount lost, and a recovered amount no bigger than that.")
+        elif problem:
+            st.warning(problem)
         else:
             result = rights.assess(txn, FAULTS[fault], int(loss), as_of, rights.LIABILITY_CAPS[account], alert, bank_report, police_report, used_before, int(recovered))
             log_event(f"Rights checked under: {result['regime']}")
@@ -175,6 +212,8 @@ with case_tab:
             for number, step in enumerate(rights.next_steps(txn, as_of, bank_report, police_report), 1):
                 st.write(f"{number}. {step}")
             st.link_button("Report on cybercrime.gov.in", "https://cybercrime.gov.in/")
+            if result["deadlines"]:
+                st.download_button("Add deadlines to my calendar", extras.calendar_file(result["deadlines"]), "wapsi-deadlines.ics", "text/calendar", on_click="ignore")
 
             facts = {
                 "transaction_date": txn, "loss_rupees": int(loss), "recovered_rupees": int(recovered), "bank": bank["bank"] if bank else None, "ifsc": bank["ifsc"] if bank else None,
@@ -237,6 +276,23 @@ with rejected_tab:
         except SecretBlocked as blocked:
             st.warning(str(blocked))
 
+with shield_tab:
+    st.write("Fake recovery agents target people who have just lost money. Paste a message or describe a call offering to get your money back.")
+    offer = st.text_area("The message", max_chars=4000, key="recovery_message")
+    if offer:
+        try:
+            flags = extras.recovery_flags(sanitize(offer))
+        except SecretBlocked:
+            flags = extras.recovery_flags("otp")
+            st.warning("This contains an OTP, PIN or password. It was not saved. Never share these with anyone.")
+        log_event(f"Recovery message checked, warning signs: {len(flags)}")
+        if flags:
+            st.error(f"{len(flags)} warning sign(s). Treat this as a likely scam, and call 1930 yourself.")
+            for item in flags:
+                st.write(f"**{item['flag']}.** {item['advice']}")
+        else:
+            st.info("No known warning signs found, but that does not make it safe. Never pay anyone to recover money, and call 1930 yourself to check.")
+
 with rules_tab:
     status = live_status()
     st.caption(f"Sources checked at {status['generated_at']} UTC, refreshed every 5 minutes.")
@@ -265,7 +321,8 @@ with judges_tab:
             "Replace it with: I am under digital arrest. The app tells the victim to hang up, in three languages.",
             "In Bank said no, paste: You shared your OTP so this is customer negligence. It cites the rule and writes the letter.",
             "In Live rules, compare the page hashes and clause results, which are fetched live from RBI.",
-            "Download the Proof Pack, then click Delete my session data.",
+            "In Is this a scam?, paste: Pay a processing fee of Rs 5000 and I will guarantee your refund. It lists the warning signs.",
+            "Download the calendar reminders and the Proof Pack, then click Delete my session data.",
         ],
         1,
     ):

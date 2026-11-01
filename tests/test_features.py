@@ -3,7 +3,7 @@ from datetime import date
 import httpx
 import pytest
 
-from app import checks, decoder, rights
+from app import checks, decoder, extras, rights
 from app.safety import append_event, proof_pack
 
 FEED = """<rss><channel><item><title><![CDATA[Sovereign Gold Bond price]]></title></item>
@@ -95,3 +95,52 @@ def test_every_message_exists_in_all_languages():
 def test_example_case_comes_from_the_engine():
     case = rights.example_case()
     assert case["at_risk"] == 8500 and case["paid_now"] == 0 and case["deadline"] == date(2027, 1, 6)
+
+
+def test_report_before_transaction_is_refused():
+    assert rights.date_problem(date(2027, 3, 2), bank_report=date(2027, 3, 1))
+    with pytest.raises(ValueError):
+        rights.assess(date(2027, 3, 2), rights.NEGLIGENCE, 100, date(2027, 3, 9), bank_report=date(2027, 3, 1))
+
+
+def test_old_rule_transactions_have_no_five_day_clock():
+    plan = rights.plan_transactions([{"date": date(2026, 6, 1), "amount": 100, "bank": ""}], date(2026, 6, 2))
+    assert plan["safe_deadline"] is None and not plan["mixed_rules"]
+
+
+def test_mixed_rule_transactions_are_flagged():
+    rows = [{"date": date(2026, 12, 31), "amount": 100, "bank": ""}, {"date": date(2027, 1, 2), "amount": 100, "bank": ""}]
+    plan = rights.plan_transactions(rows, date(2027, 1, 2))
+    assert plan["mixed_rules"] and plan["safe_deadline"] == date(2027, 1, 7)
+
+
+def test_no_valid_rows_gives_no_plan():
+    assert rights.plan_transactions([{"date": None, "amount": None, "bank": ""}], date(2027, 1, 1)) is None
+
+
+@pytest.mark.parametrize("text, flag", [
+    ("Pay a processing fee of Rs 5000", "Asks for a fee"),
+    ("Install AnyDesk so I can help", "Asks you to install an app or share your screen"),
+    ("I guarantee your full refund", "Promises a guaranteed recovery"),
+    ("I am a recovery agent", "Claims to be an official or a recovery expert"),
+    ("Tell me your OTP", "Asks about your OTP, PIN or password"),
+    ("You must do this urgent", "Pushes you to act immediately"),
+    ("शुल्क भेजिए", "Asks for a fee"),
+])
+def test_recovery_scam_flags(text, flag):
+    assert flag in [item["flag"] for item in extras.recovery_flags(text)]
+
+
+def test_ordinary_message_has_no_flags():
+    assert extras.recovery_flags("Your complaint number has been noted by the branch") == []
+
+
+def test_evidence_event_holds_hash_not_content():
+    event = extras.evidence_event(b"my secret statement", "application/pdf")
+    assert extras.fingerprint(b"my secret statement") in event and "secret" not in event
+
+
+def test_calendar_file_has_date_and_alarm():
+    ics = extras.calendar_file({"Report to bank, and police": date(2027, 1, 6)})
+    assert "DTSTART;VALUE=DATE:20270106" in ics and "DTEND;VALUE=DATE:20270107" in ics
+    assert "TRIGGER:-P1D" in ics and "bank\\, and" in ics and ics.endswith("END:VCALENDAR\r\n")

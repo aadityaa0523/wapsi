@@ -68,3 +68,34 @@ def test_language_switch_translates_form_and_keeps_working(monkeypatch):
     app.number_input[0].set_value(5000)
     app.button[0].click().run()
     assert not app.exception
+
+
+def test_impossible_dates_get_a_clear_message(monkeypatch):
+    app = run_app(monkeypatch)
+    app.date_input[0].set_value(date(2026, 10, 30))
+    app.number_input[0].set_value(5000)
+    app.date_input[2].set_value(date(2026, 10, 1))
+    app.button[0].click().run()
+    assert not app.exception
+    assert any("cannot be before" in warning.value for warning in app.warning)
+
+
+def test_recovery_checker_flags_a_fee(monkeypatch):
+    app = run_app(monkeypatch)
+    next(area for area in app.text_area if area.label == "The message").set_value("Pay a processing fee of Rs 5000").run()
+    assert not app.exception
+    assert any("warning sign" in error.value for error in app.error)
+
+
+def test_several_transactions_show_the_safe_date(monkeypatch):
+    app = run_app(monkeypatch)
+    app.checkbox[0].check().run()
+    next(radio for radio in app.radio if radio.label == "How many transactions?").set_value(2).run()
+    by_label = lambda widgets, label: next(widget for widget in widgets if widget.label == label)
+    by_label(app.date_input, "Transaction 1 date").set_value(date(2027, 3, 3))
+    by_label(app.number_input, "Transaction 1 amount (Rs)").set_value(30000)
+    by_label(app.date_input, "Transaction 2 date").set_value(date(2027, 3, 1))
+    by_label(app.number_input, "Transaction 2 amount (Rs)").set_value(25000).run()
+    assert not app.exception
+    assert any("by 06 Mar 2027" in warning.value for warning in app.warning)
+    assert any("above the Rs 50,000" in warning.value for warning in app.warning)

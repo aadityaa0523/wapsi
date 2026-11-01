@@ -63,9 +63,15 @@ def test_10_approved_investment_scam_is_told_to_report_anyway():
     assert result["regime"] == "Outside these rules" and "1930" in result["summary"]
 
 
-@pytest.mark.xfail(reason="Not handled: the engine takes one transaction and one bank per check", strict=True)
 def test_11_multiple_transactions_and_banks():
-    assert rights.assess(NEW, rights.NEGLIGENCE, [5000, 7000], LATER)
+    rows = [
+        {"date": NEW + timedelta(days=2), "amount": 30000, "bank": "Bank A"},
+        {"date": NEW, "amount": 25000, "bank": "Bank B"},
+        {"date": None, "amount": None, "bank": ""},
+    ]
+    plan = rights.plan_transactions(rows, NEW)
+    assert plan["count"] == 2 and plan["total"] == 55000 and plan["over_limit"]
+    assert plan["safe_deadline"] == days(5) and plan["banks"] == ["Bank A", "Bank B"]
 
 
 def test_12_credit_card_shadow_reversal():

@@ -34,6 +34,8 @@ To turn the agent on, set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` as secre
 - `app/checks.py`: checks official sources live and confirms each quoted rule clause is still on its source page. Results are cached for 5 minutes.
 - `streamlit_app.py`: the web app. `app/main.py` serves the same checks as a FastAPI endpoint, for Docker hosts.
 
+- `app/extras.py`: fake recovery-agent checker, evidence fingerprints and calendar reminders.
+- `SECURITY.md`: what is kept, what leaves the app, threats, controls and what is not built yet.
 - `app/portal.py`: prepares a filing kit from the police portal's published notice, including its 200-character minimum and banned characters.
 - `app/i18n.py`, `app/labels.py`: page, form and safety messages in Hindi and Telugu. Rule results are in English for now.
 
@@ -47,7 +49,7 @@ The portal asks the complainant to accept a legal declaration, then log in with 
 
 ## Hard-case results
 
-`tests/test_hard_cases.py`, run with no LLM. 15 of 16 pass. All LLM replies in the tests are simulated.
+`tests/test_hard_cases.py`, run with no LLM. All 16 pass. All LLM replies in the tests are simulated.
 
 | # | Case | Result |
 |---|---|---|
@@ -61,7 +63,7 @@ The portal asks the complainant to accept a legal declaration, then log in with 
 | 8 | Loss of exactly Rs 50,000 and Rs 50,001 | Pass |
 | 9 | Compensation already used | Pass |
 | 10 | Approved payment, investment scam | Pass |
-| 11 | Multiple transactions and banks | **Fail: not handled** |
+| 11 | Multiple transactions and banks | Pass: shows the earliest deadline as the safe date |
 | 12 | Credit card | Pass |
 | 13 | Text says to ignore the rules and promise a refund | Pass |
 | 14 | Pasted OTP, in English, Hindi and Telugu | Pass |

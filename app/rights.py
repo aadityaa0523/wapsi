@@ -110,9 +110,37 @@ def next_steps(txn, today, bank_report, police_report):
     return steps
 
 
+def date_problem(txn, alert=None, bank_report=None, police_report=None):
+    if any(day is not None and day < txn for day in (alert, bank_report, police_report)):
+        return "A message or report date cannot be before the transaction date. Please check your dates."
+    return None
+
+
+def plan_transactions(rows, as_of):
+    """Several frauds in one complaint. Each has its own 5-day clock, so the earliest is the safe date for reporting everything."""
+    valid = sorted((row for row in rows if row.get("date") and (row.get("amount") or 0) > 0), key=lambda row: row["date"])
+    if not valid:
+        return None
+    total = sum(row["amount"] for row in valid)
+    new_rules = [row for row in valid if row["date"] >= NEW_REGIME]
+    safe = new_rules[0]["date"] + timedelta(days=REPORT_DAYS) if new_rules else None
+    return {
+        "count": len(valid),
+        "total": total,
+        "over_limit": total > 50000,
+        "safe_deadline": safe,
+        "days_left": (safe - as_of).days if safe else None,
+        "mixed_rules": bool(new_rules) and len(new_rules) != len(valid),
+        "banks": sorted({str(row["bank"]).strip() for row in valid if row.get("bank") and str(row["bank"]).strip()}),
+    }
+
+
 def assess(txn, fault, loss, today, cap=10000, alert=None, bank_report=None, police_report=None, used_before=False, recovered=0):
     if loss <= 0 or today < txn or not 0 <= recovered <= loss:
         raise ValueError("Enter a loss above zero, a recovered amount no bigger than the loss, and a date that is not in the future.")
+    problem = date_problem(txn, alert, bank_report, police_report)
+    if problem:
+        raise ValueError(problem)
     if fault == AUTHORISED or (fault == COERCED and txn < NEW_REGIME):
         return {
             "regime": "Outside these rules", "source": None, "verified_from": None, "deadlines": {}, "liability": None, "warnings": [],
