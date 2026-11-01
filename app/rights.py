@@ -87,6 +87,20 @@ def dual_report_guard(deadline, bank_report, police_report, today):
     return warnings
 
 
+def next_steps(txn, today, bank_report, police_report):
+    """Most urgent first, so a recent victim acts before reading anything else."""
+    steps = []
+    if police_report is None:
+        steps.append("Call 1930 now" + (" because money can sometimes still be stopped while the fraud is recent" if (today - txn).days <= 1 else "") + ", then file on cybercrime.gov.in. Save the acknowledgement number.")
+    if bank_report is None:
+        steps.append("Tell your bank through its official helpline and block the card or UPI. Then report in writing and keep the reference and date.")
+    if bank_report is not None and police_report is not None:
+        steps.append("Both reports are done. Keep the proof, and if the bank rejects you or goes silent, use the Bank rejected me tab.")
+    steps.append("Save screenshots, SMS alerts and the scammer's numbers. Do not delete anything.")
+    steps.append("Beware of anyone offering to recover your money for a fee. That is a common second scam.")
+    return steps
+
+
 def assess(txn, fault, loss, today, cap=10000, alert=None, bank_report=None, police_report=None, used_before=False):
     if loss <= 0 or today < txn:
         raise ValueError("Enter a loss above zero and a transaction date that is not in the future.")
@@ -96,6 +110,9 @@ def assess(txn, fault, loss, today, cap=10000, alert=None, bank_report=None, pol
             "summary": "You approved this payment, so these RBI rules may not cover it. Still report it to 1930 and cybercrime.gov.in now.",
         }
     if txn < NEW_REGIME:
-        return assess_2017(fault, loss, cap, alert, bank_report) | {"warnings": []}
+        result = assess_2017(fault, loss, cap, alert, bank_report)
+        if bank_report is not None:
+            result["deadlines"] |= {"Bank must credit the amount back (shadow reversal)": add_working_days(bank_report, 10), "Bank must resolve your complaint": bank_report + timedelta(days=90)}
+        return result | {"warnings": []}
     result = assess_2027(txn, fault, loss, bank_report, police_report, used_before)
     return result | {"warnings": dual_report_guard(result["deadlines"]["Report to bank and police"], bank_report, police_report, today)}

@@ -44,6 +44,18 @@ def append_event(log, event, at):
     return entry
 
 
+def proof_pack(facts, result, log):
+    """A record for the victim to keep. Holds no story text, so it is safe to attach to a complaint."""
+    lines = ["WAPSI PROOF PACK", "Your own record. Not a legal document and not a filing receipt.", "", "FACTS YOU ENTERED"]
+    lines += [f"{name}: {value if value is not None else 'not done'}" for name, value in facts.items()]
+    lines += ["", f"RULES USED: {result['regime']}", f"Source: {result['source']}", result["summary"], "", "DEADLINES"]
+    lines += [f"{name}: {deadline:%d %b %Y}" for name, deadline in result["deadlines"].items()] or ["None"]
+    lines += ["", "EVENT LOG (each hash covers the one before it)"]
+    lines += [f"{entry['at']} | {entry['event']} | {entry['hash']}" for entry in log]
+    lines += ["", f"Log chain intact: {chain_is_valid(log)}"]
+    return "\n".join(lines)
+
+
 def chain_is_valid(log):
     previous = "0" * 64
     for entry in log:

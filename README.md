@@ -27,6 +27,8 @@ The LLM classifies and writes. It never decides a deadline, amount or eligibilit
 
 To turn the agent on, set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` as secrets, for any OpenAI-compatible provider.
 
+- `app/decoder.py`: matches a bank's rejection against the 2017 circular and writes an escalation letter.
+- `app/agent.py`: classifies the story and drafts reports through an LLM, then fact-checks every number.
 - `app/rights.py`: picks the 2017 or 2027 RBI rules by transaction date, then works out deadlines, liability and compensation. The 2017 values were read from the RBI circular. The 2027 values come from news summaries and still need checking against the RBI text.
 - `app/safety.py`: blocks OTPs and PINs, masks identifiers, detects urgent cases, and keeps a hash-chained log.
 - `app/checks.py`: checks official sources live and confirms each quoted rule clause is still on its source page. Results are cached for 5 minutes.

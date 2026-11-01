@@ -15,6 +15,21 @@ SOURCES = [
         "url": "https://www.rbi.org.in/scripts/FS_Notification.aspx?Id=11040",
         "clause": "within three working days of receiving the communication from the bank",
     },
+    {
+        "name": "RBI 2017: burden of proof on the bank",
+        "url": "https://www.rbi.org.in/scripts/FS_Notification.aspx?Id=11040",
+        "clause": "The burden of proving customer liability in case of unauthorised electronic banking transactions shall lie on the bank",
+    },
+    {
+        "name": "RBI 2017: shadow reversal in 10 working days",
+        "url": "https://www.rbi.org.in/scripts/FS_Notification.aspx?Id=11040",
+        "clause": "within 10 working days from the date of such notification by the customer",
+    },
+    {
+        "name": "RBI 2017: complaint resolved in 90 days",
+        "url": "https://www.rbi.org.in/scripts/FS_Notification.aspx?Id=11040",
+        "clause": "not exceeding 90 days from the date of receipt of the complaint",
+    },
     {"name": "RBI 2026 directions press release", "url": "https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=63011"},
     {"name": "RBI press release feed", "url": "https://www.rbi.org.in/pressreleases_rss.xml"},
     {"name": "RBI complaint portal", "url": "https://cms.rbi.org.in/"},
@@ -24,6 +39,10 @@ SOURCES = [
 ]
 
 CACHE_SECONDS = 300
+HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; Wapsi status check)"}
+RSS_URL = "https://www.rbi.org.in/pressreleases_rss.xml"
+WATCH_WORDS = re.compile(r"liabilit|unauthori[sz]ed|fraud|customer protection|ombudsman|digital payment", re.I)
+IFSC = re.compile(r"[A-Z]{4}0[A-Z0-9]{6}")
 _cache = {"at": 0.0, "body": None}
 _lock = asyncio.Lock()
 
@@ -65,13 +84,34 @@ def check_database():
 
 
 async def run_checks(transport=None):
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; Wapsi status check)"}
-    async with httpx.AsyncClient(timeout=20, follow_redirects=True, headers=headers, transport=transport) as client:
+    async with httpx.AsyncClient(timeout=20, follow_redirects=True, headers=HEADERS, transport=transport) as client:
         sources, database = await asyncio.gather(
             asyncio.gather(*(check_source(client, source) for source in SOURCES)),
             asyncio.to_thread(check_database),
         )
     return {"generated_at": now(), "sources": list(sources), "database": database}
+
+
+def rule_updates(transport=None):
+    """RBI press releases that may change these rules. Flags them for a human; never changes a rule."""
+    with httpx.Client(timeout=20, follow_redirects=True, headers=HEADERS, transport=transport) as client:
+        response = client.get(RSS_URL)
+        response.raise_for_status()
+    titles = re.findall(r"<item>\s*<title><!\[CDATA\[(.*?)\]\]></title>", response.text, re.S)
+    return [html.unescape(title).strip() for title in titles if WATCH_WORDS.search(title)]
+
+
+def lookup_ifsc(code, transport=None):
+    code = code.strip().upper()
+    if not IFSC.fullmatch(code):
+        raise ValueError("That is not a valid IFSC format.")
+    with httpx.Client(timeout=20, transport=transport) as client:
+        response = client.get(f"https://ifsc.razorpay.com/{code}")
+    if response.status_code == 404:
+        return None
+    response.raise_for_status()
+    data = response.json()
+    return {"bank": data["BANK"], "branch": data["BRANCH"], "city": data["CITY"], "ifsc": code}
 
 
 async def cached_status():
