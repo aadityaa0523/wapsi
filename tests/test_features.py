@@ -68,3 +68,13 @@ def test_proof_pack_has_dates_and_hashes():
     result = rights.assess(date(2027, 3, 1), rights.NEGLIGENCE, 5000, date(2027, 3, 2))
     pack = proof_pack({"loss_rupees": 5000, "bank_report": None}, result, log)
     assert entry["hash"] in pack and "06 Mar 2027" in pack and "bank_report: not done" in pack and "chain intact: True" in pack
+
+
+def test_decoder_cites_2027_paragraphs_under_new_rules():
+    found = decoder.decode("You shared your OTP. You authorised this payment.", new_rules=True)
+    assert "76K" in found[0]["explain"] and "4(15A)" in found[1]["explain"]
+    assert "13543" in decoder.escalation_letter(found, new_rules=True)
+
+
+def test_coercion_ground_is_not_offered_under_old_rules():
+    assert decoder.decode("You authorised this payment") == []

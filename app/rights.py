@@ -3,7 +3,7 @@ from datetime import date, timedelta
 NEW_REGIME = date(2027, 1, 1)
 COMPENSATION_ENDS = date(2028, 1, 1)
 CIRCULAR_2017 = "https://www.rbi.org.in/scripts/FS_Notification.aspx?Id=11040"
-DIRECTIONS_2026 = "https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=63011"
+DIRECTIONS_2026 = "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0"
 
 # Table 1 of the 2017 circular
 LIABILITY_CAPS = {
@@ -11,7 +11,7 @@ LIABILITY_CAPS = {
     "Other savings, prepaid, small current account, or credit card up to 5 lakh limit": 10000,
     "Other current account, or credit card above 5 lakh limit": 25000,
 }
-THIRD_PARTY, NEGLIGENCE, BANK_FAULT, AUTHORISED = "third_party", "negligence", "bank_fault", "authorised"
+THIRD_PARTY, NEGLIGENCE, BANK_FAULT, AUTHORISED, COERCED = "third_party", "negligence", "bank_fault", "authorised", "coerced"
 
 
 def add_working_days(start, days):
@@ -51,28 +51,35 @@ def assess_2017(fault, loss, cap, alert, bank_report):
     return result | {"liability": None, "summary": "Reported after 7 working days, so the bank's own board policy decides your liability."}
 
 
-def assess_2027(txn, fault, loss, bank_report, police_report, used_before):
+def assess_2027(txn, fault, loss, bank_report, police_report, used_before, recovered=0):
     deadline = txn + timedelta(days=5)
     result = {
         "regime": "RBI directions effective 1 Jan 2027",
         "source": DIRECTIONS_2026,
-        "verified_from": "news summaries, RBI text not yet checked",
-        "deadlines": {"Report to bank and police": deadline},
+        "verified_from": "RBI directions, compared across all 7 bank types. Paragraph numbers shown are for commercial banks and differ for others",
+        "deadlines": {},
     }
+    if bank_report is not None:
+        result["deadlines"] |= {
+            "Bank must respond (60 days if cross-border)": bank_report + timedelta(days=45),
+            "Credit cards only: shadow reversal": bank_report + timedelta(days=5),
+        }
     if fault == BANK_FAULT:
-        return result | {"liability": None, "summary": "The outcome for bank fault under these rules is not confirmed yet. Report to both today."}
+        return result | {"liability": 0, "summary": "Zero liability and reversal if the bank was at fault, whether or not you report (paragraph 76L)."}
     if fault == THIRD_PARTY:
+        result["deadlines"] = {"Report to bank": deadline} | result["deadlines"]
         in_time = bank_report is not None and bank_report <= deadline
-        summary = "Reported in time for zero liability." if in_time else "Zero liability needs a bank report within 5 calendar days. After that, the bank's policy decides."
+        summary = "Reported in time for zero liability and reversal (paragraph 76M)." if in_time else "Zero liability needs a bank report within 5 calendar days of the fraud. After that, the bank's policy decides (paragraph 76M)."
         return result | {"liability": 0 if in_time else None, "summary": summary}
+    result["deadlines"] = {"Report to bank AND police": deadline} | result["deadlines"]
+    note = " RBI counts payments approved under coercion as fraud (paragraph 4(15A)), but your bank classifies the case." if fault == COERCED else ""
     if txn >= COMPENSATION_ENDS:
-        return result | {"liability": None, "compensation": 0, "summary": "Compensation covers frauds in the scheme's first year only."}
-    # shortcut: uses the loss as entered, RBI says net loss; upgrade after reading the directions
+        return result | {"liability": None, "compensation": 0, "summary": "Compensation covers frauds in the scheme's first year only (paragraph 76U)." + note}
     both = all(report is not None and report <= deadline for report in (bank_report, police_report))
     if used_before or loss > 50000:
-        return result | {"liability": None, "compensation": 0, "summary": "Not eligible: compensation is once per lifetime and covers losses up to Rs 50,000."}
-    possible = min(round(loss * 0.85), 25000)
-    summary = f"Up to Rs {possible:,} possible, which the bank decides. It needs reports to BOTH the bank and police by {deadline:%d %b %Y}."
+        return result | {"liability": None, "compensation": 0, "summary": "Not eligible: compensation is once per lifetime and covers gross losses up to Rs 50,000 (paragraph 76T)." + note}
+    possible = min(round(max(loss - recovered, 0) * 0.85), 25000)
+    summary = f"Up to Rs {possible:,} possible if your bank accepts the loss as genuine. It needs reports to BOTH the bank and police by {deadline:%d %b %Y} (paragraph 76T)." + note
     return result | {"liability": None, "compensation": possible if both else 0, "possible": possible, "summary": summary}
 
 
@@ -101,18 +108,19 @@ def next_steps(txn, today, bank_report, police_report):
     return steps
 
 
-def assess(txn, fault, loss, today, cap=10000, alert=None, bank_report=None, police_report=None, used_before=False):
-    if loss <= 0 or today < txn:
-        raise ValueError("Enter a loss above zero and a transaction date that is not in the future.")
-    if fault == AUTHORISED:
+def assess(txn, fault, loss, today, cap=10000, alert=None, bank_report=None, police_report=None, used_before=False, recovered=0):
+    if loss <= 0 or today < txn or not 0 <= recovered <= loss:
+        raise ValueError("Enter a loss above zero, a recovered amount no bigger than the loss, and a date that is not in the future.")
+    if fault == AUTHORISED or (fault == COERCED and txn < NEW_REGIME):
         return {
             "regime": "Outside these rules", "source": None, "verified_from": None, "deadlines": {}, "liability": None, "warnings": [],
-            "summary": "You approved this payment, so these RBI rules may not cover it. Still report it to 1930 and cybercrime.gov.in now.",
+            "summary": "You approved this payment, so these RBI rules may not cover it. Under the rules from 2027, a payment forced by threats can count as fraud. Still report it to 1930 and cybercrime.gov.in now.",
         }
     if txn < NEW_REGIME:
         result = assess_2017(fault, loss, cap, alert, bank_report)
         if bank_report is not None:
             result["deadlines"] |= {"Bank must credit the amount back (shadow reversal)": add_working_days(bank_report, 10), "Bank must resolve your complaint": bank_report + timedelta(days=90)}
         return result | {"warnings": []}
-    result = assess_2027(txn, fault, loss, bank_report, police_report, used_before)
-    return result | {"warnings": dual_report_guard(result["deadlines"]["Report to bank and police"], bank_report, police_report, today)}
+    result = assess_2027(txn, fault, loss, bank_report, police_report, used_before, recovered)
+    needs_both = fault in (NEGLIGENCE, COERCED)
+    return result | {"warnings": dual_report_guard(txn + timedelta(days=5), bank_report, police_report, today) if needs_both else []}

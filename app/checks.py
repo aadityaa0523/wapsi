@@ -30,6 +30,26 @@ SOURCES = [
         "url": "https://www.rbi.org.in/scripts/FS_Notification.aspx?Id=11040",
         "clause": "not exceeding 90 days from the date of receipt of the complaint",
     },
+    {
+        "name": "RBI 2027: compensation needs bank and police reports",
+        "url": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0",
+        "clause": "on the National Cyber Crime Reporting Portal or National Cyber Crime Helpline (1930) and to the bank within five calendar days from its occurrence",
+    },
+    {
+        "name": "RBI 2027: third-party breach, zero liability",
+        "url": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0",
+        "clause": "reports the unauthorised fraudulent EBT to the bank within five calendar days from the date of its occurrence",
+    },
+    {
+        "name": "RBI 2027: coerced approval counts as fraud",
+        "url": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0",
+        "clause": "executed by the customer by granting approval under coercion or duress",
+    },
+    {
+        "name": "RBI 2027: burden of proof on the bank",
+        "url": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0",
+        "clause": "The burden of proving customer liability in complaints involving fraudulent EBTs shall lie on the bank",
+    },
     {"name": "RBI 2026 directions press release", "url": "https://www.rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=63011"},
     {"name": "RBI press release feed", "url": "https://www.rbi.org.in/pressreleases_rss.xml"},
     {"name": "RBI complaint portal", "url": "https://cms.rbi.org.in/"},

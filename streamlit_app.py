@@ -12,7 +12,8 @@ IST = timezone(timedelta(hours=5, minutes=30))
 MAX_AGENT_CALLS = 10
 FAULTS = {
     "Money left without me sharing anything": rights.THIRD_PARTY,
-    "I shared an OTP, PIN or password": rights.NEGLIGENCE,
+    "I shared an OTP, PIN or password, or installed a bad app": rights.NEGLIGENCE,
+    "I paid because I was threatened or forced, such as digital arrest": rights.COERCED,
     "The bank made a mistake": rights.BANK_FAULT,
     "I approved the payment myself, such as an investment scam": rights.AUTHORISED,
 }
@@ -118,6 +119,7 @@ with case_tab:
     with st.form("case"):
         txn = st.date_input("Date of the transaction", value=today, max_value=today)
         loss = st.number_input("Amount lost (Rs)", min_value=1, value=None, step=1)
+        recovered = st.number_input("Amount already recovered (Rs)", min_value=0, value=0, step=1)
         fault = st.selectbox("What best describes it?", FAULTS, index=suggested)
         account = st.selectbox("Account type", rights.LIABILITY_CAPS)
         alert = st.date_input("Date the bank's message reached you, if any", value=None, max_value=today)
@@ -127,10 +129,10 @@ with case_tab:
         submitted = st.form_submit_button("Check my rights")
 
     if submitted:
-        if loss is None:
-            st.warning("Enter the amount lost.")
+        if loss is None or recovered > loss:
+            st.warning("Enter the amount lost, and a recovered amount no bigger than that.")
         else:
-            result = rights.assess(txn, FAULTS[fault], int(loss), today, rights.LIABILITY_CAPS[account], alert, bank_report, police_report, used_before)
+            result = rights.assess(txn, FAULTS[fault], int(loss), today, rights.LIABILITY_CAPS[account], alert, bank_report, police_report, used_before, int(recovered))
             log_event(f"Rights checked under: {result['regime']}")
             st.subheader(result["regime"])
             st.info(result["summary"])
@@ -149,7 +151,7 @@ with case_tab:
             st.link_button("Report on cybercrime.gov.in", "https://cybercrime.gov.in/")
 
             facts = {
-                "transaction_date": txn, "loss_rupees": int(loss), "bank": bank["bank"] if bank else None, "ifsc": bank["ifsc"] if bank else None,
+                "transaction_date": txn, "loss_rupees": int(loss), "recovered_rupees": int(recovered), "bank": bank["bank"] if bank else None, "ifsc": bank["ifsc"] if bank else None,
                 "bank_alert": alert, "bank_report": bank_report, "police_report": police_report, "today": today,
             }
             if agent.configured() and clean and level == "normal":
@@ -168,17 +170,18 @@ with case_tab:
             st.download_button("Download my Proof Pack", proof_pack(facts, result, st.session_state["audit"]), "wapsi-proof-pack.txt", on_click="ignore")
 
 with rejected_tab:
-    st.write("Paste the bank's reply. Wapsi checks it against the RBI 2017 circular, which applies to transactions before 1 January 2027.")
+    st.write("Paste the bank's reply. Wapsi checks it against the RBI rules for your transaction date.")
+    new_rules = st.checkbox("My transaction was on or after 1 January 2027")
     rejection = st.text_area("The bank's reply", max_chars=4000)
     if rejection:
         try:
-            found = decoder.decode(sanitize(rejection))
+            found = decoder.decode(sanitize(rejection), new_rules)
             log_event("Bank reply decoded")
             for item in found:
                 st.write(f"**{item['ground']}.** {item['explain']}")
             if not found:
                 st.write("No known reason matched. The letter below asks the bank to give its reason in writing.")
-            st.text_area("Letter to send (check it and fill in the blanks)", decoder.escalation_letter(found), height=300)
+            st.text_area("Letter to send (check it and fill in the blanks)", decoder.escalation_letter(found, new_rules), height=300)
         except SecretBlocked as blocked:
             st.warning(str(blocked))
 

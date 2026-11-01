@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import pytest
 
 from app import rights
-from app.rights import AUTHORISED, BANK_FAULT, NEGLIGENCE, THIRD_PARTY, assess
+from app.rights import AUTHORISED, BANK_FAULT, COERCED, NEGLIGENCE, THIRD_PARTY, assess
 
 MONDAY = date(2026, 6, 1)
 NEW = date(2027, 3, 1)
@@ -83,3 +83,39 @@ def test_bad_input_is_refused(loss, today):
 
 def test_no_result_promises_a_refund():
     assert "refund" not in new()["summary"].lower()
+
+
+def test_rbi_illustration_net_loss():
+    result = assess(NEW, NEGLIGENCE, 40000, LATER, bank_report=NEW, police_report=NEW, recovered=15000)
+    assert result["compensation"] == 21250
+
+
+def test_gross_loss_decides_eligibility_not_net():
+    result = assess(NEW, NEGLIGENCE, 60000, LATER, bank_report=NEW, police_report=NEW, recovered=20000)
+    assert result["compensation"] == 0
+
+
+def test_2027_bank_fault_is_zero_without_report():
+    assert assess(NEW, BANK_FAULT, 5000, LATER)["liability"] == 0
+
+
+def test_2027_third_party_needs_only_the_bank():
+    result = assess(NEW, THIRD_PARTY, 5000, LATER, bank_report=NEW + timedelta(days=5))
+    assert result["liability"] == 0 and not result["warnings"]
+    assert assess(NEW, THIRD_PARTY, 5000, LATER, bank_report=NEW + timedelta(days=6))["liability"] is None
+
+
+def test_2027_bank_response_deadline():
+    result = assess(NEW, THIRD_PARTY, 5000, LATER, bank_report=NEW)
+    assert result["deadlines"]["Bank must respond (60 days if cross-border)"] == NEW + timedelta(days=45)
+
+
+def test_coerced_counts_only_under_new_rules():
+    new_rules = assess(NEW, COERCED, 10000, LATER, bank_report=NEW, police_report=NEW)
+    assert new_rules["compensation"] == 8500 and "4(15A)" in new_rules["summary"]
+    assert assess(MONDAY, COERCED, 10000, LATER)["regime"] == "Outside these rules"
+
+
+def test_recovered_above_loss_is_refused():
+    with pytest.raises(ValueError):
+        assess(NEW, NEGLIGENCE, 100, LATER, recovered=101)

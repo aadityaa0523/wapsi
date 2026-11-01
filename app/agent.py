@@ -4,9 +4,9 @@ import re
 
 import httpx
 
-from app.rights import AUTHORISED, BANK_FAULT, NEGLIGENCE, THIRD_PARTY
+from app.rights import AUTHORISED, BANK_FAULT, COERCED, NEGLIGENCE, THIRD_PARTY
 
-FAULTS = {THIRD_PARTY, NEGLIGENCE, BANK_FAULT, AUTHORISED, "unclear"}
+FAULTS = {THIRD_PARTY, NEGLIGENCE, BANK_FAULT, AUTHORISED, COERCED, "unclear"}
 CONFIDENCE = {"high", "medium", "low"}
 PROMISES = re.compile(r"\b(guarantee\w*|will (get|receive) (a |your |the )?(money|refund)|assured refund)\b", re.I)
 SYSTEM = (
@@ -44,7 +44,7 @@ def ask_llm(prompt, transport=None):
 
 def classify(story, transport=None):
     prompt = (
-        'Return {"fault": one of "third_party" (money left and the victim shared nothing), "negligence" (victim shared an OTP, PIN or password), '
+        'Return {"fault": one of "third_party" (money left and the victim shared nothing), "negligence" (victim shared an OTP, PIN or password, or installed a malicious app), "coerced" (victim paid under threat or duress, such as digital arrest), '
         '"bank_fault", "authorised" (victim approved the payment), "unclear"; "fraud_type": short text; "confidence": "high", "medium" or "low"; '
         f'"question": one question to ask if unclear, else ""}}.\n<story>{story}</story>'
     )
