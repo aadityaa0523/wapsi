@@ -6,6 +6,7 @@ import streamlit as st
 
 from app import agent, checks, decoder, portal, rights, ui
 from app.i18n import LANGUAGES, TEXT
+from app.labels import FAULT_TEXT
 from app.safety import SecretBlocked, append_event, chain_is_valid, proof_pack, sanitize, triage
 
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -48,27 +49,31 @@ def agent_call_allowed():
     return used < MAX_AGENT_CALLS
 
 
-st.set_page_config(page_title="Wapsi - Cyber Fraud Recovery Assistant", layout="centered")
+st.set_page_config(page_title="Wapsi - Cyber Fraud Recovery Assistant", layout="wide")
 ui.page_style()
-language = st.radio("Language", LANGUAGES, horizontal=True, label_visibility="collapsed")
-st.error(TEXT["emergency"][language])
+language = st.session_state.get("language", LANGUAGES[0])
+t = lambda key: TEXT[key][language]
+ui.top_bar(language)
+language_col, size_col = st.columns([3, 1])
+language = language_col.radio("Language", LANGUAGES, horizontal=True, label_visibility="collapsed", key="language")
+ui.text_size(size_col.segmented_control("Text size", list(ui.SIZES), default="A", label_visibility="collapsed"))
+ui.brand(language)
+st.error(t("emergency"))
 ui.hero(language)
-st.caption(TEXT["disclaimer"][language])
-
-st.markdown('<div class="wp-section">See one case, start to finish</div>', unsafe_allow_html=True)
-ui.case_walkthrough()
-st.markdown('<div class="wp-section">One missing report can cost you your compensation</div>', unsafe_allow_html=True)
-st.markdown('<div class="wp-sub2">Example cases under the RBI rules from 1 January 2027, calculated live by the same engine your case uses. Your bank still decides each claim.</div>', unsafe_allow_html=True)
+st.caption(t("disclaimer"))
+ui.section(t("services"))
+ui.services(language)
+ui.section(t("why"))
 ui.two_report_table()
-st.markdown('<div class="wp-section">Checked against official sources</div>', unsafe_allow_html=True)
+ui.section(t("proof"))
 ui.stats(live_status())
-st.markdown('<div class="wp-section" id="start-here">Start here</div>', unsafe_allow_html=True)
+ui.section(t("start"), "main")
 
 today = datetime.now(IST).date()
-case_tab, kit_tab, rejected_tab, rules_tab, judges_tab = st.tabs(["My case", "Filing kit", "Bank rejected me", "Live rules", "For judges"])
+case_tab, kit_tab, rejected_tab, rules_tab, judges_tab = st.tabs([t("tab_case"), t("tab_kit"), t("tab_rejected"), t("tab_rules"), t("tab_judges")])
 
 with case_tab:
-    story = st.text_area("What happened? (optional)", max_chars=4000)
+    story = st.text_area(t("story"), max_chars=4000)
     level = "normal"
     clean = None
     if story:
@@ -88,8 +93,9 @@ with case_tab:
     if not agent.configured():
         st.info("The AI agent is off because no LLM key is set. The rules below still work.")
     else:
-        st.caption("If you use the agent or get drafts, your story goes to an AI provider after your identifiers are masked. Leave the story empty to avoid this.")
-    if agent.configured() and clean and level == "normal" and st.button("Let the agent read my story"):
+        st.checkbox(t("consent"), key="consent")
+    agent_allowed = agent.configured() and clean and level == "normal" and st.session_state.get("consent")
+    if agent_allowed and st.button("Let the agent read my story"):
         with st.status("Agent working") as steps:
             st.write("Checked your text for secrets and masked your identifiers.")
             try:
@@ -113,7 +119,7 @@ with case_tab:
         if classified["fault"] in FAULTS.values():
             suggested = list(FAULTS.values()).index(classified["fault"])
 
-    ifsc = st.text_input("Your branch IFSC (optional, finds your bank)", max_chars=11)
+    ifsc = st.text_input(t("ifsc"), max_chars=11)
     bank = None
     if ifsc:
         try:
@@ -130,16 +136,19 @@ with case_tab:
     preview = st.checkbox("Preview the rules from 1 January 2027, using future dates")
     latest = date(2028, 12, 31) if preview else today
     with st.form("case"):
-        txn = st.date_input("Date of the transaction", value=rights.NEW_REGIME if preview else today, min_value=rights.NEW_REGIME if preview else date(2017, 7, 6), max_value=latest, key=f"txn_{preview}")
-        loss = st.number_input("Amount lost (Rs)", min_value=1, value=None, step=1)
-        recovered = st.number_input("Amount already recovered (Rs)", min_value=0, value=0, step=1)
-        fault = st.selectbox("What best describes it?", FAULTS, index=suggested)
-        account = st.selectbox("Account type", rights.LIABILITY_CAPS)
-        alert = st.date_input("Date the bank's message reached you, if any", value=None, max_value=latest)
-        bank_report = st.date_input("Date you reported to the bank, if done", value=None, max_value=latest)
-        police_report = st.date_input("Date you reported to 1930 or cybercrime.gov.in, if done", value=None, max_value=latest)
-        used_before = st.checkbox("I have received this RBI compensation before")
-        submitted = st.form_submit_button("Check my rights")
+        st.markdown(f'<div class="wp-group">{t("step_money")}</div>', unsafe_allow_html=True)
+        txn = st.date_input(t("txn"), value=rights.NEW_REGIME if preview else today, min_value=rights.NEW_REGIME if preview else date(2017, 7, 6), max_value=latest, key=f"txn_{preview}")
+        loss = st.number_input(t("loss"), min_value=1, value=None, step=1)
+        recovered = st.number_input(t("recovered"), min_value=0, value=0, step=1)
+        account = st.selectbox(t("account"), rights.LIABILITY_CAPS)
+        st.markdown(f'<div class="wp-group">{t("step_type")}</div>', unsafe_allow_html=True)
+        fault = st.selectbox(t("fault"), FAULTS, index=suggested, format_func=lambda label: FAULT_TEXT[FAULTS[label]].get(language, label))
+        st.markdown(f'<div class="wp-group">{t("step_dates")}</div>', unsafe_allow_html=True)
+        alert = st.date_input(t("alert"), value=None, max_value=latest)
+        bank_report = st.date_input(t("reported_bank"), value=None, max_value=latest)
+        police_report = st.date_input(t("reported_police"), value=None, max_value=latest)
+        used_before = st.checkbox(t("used_before"))
+        submitted = st.form_submit_button(t("submit"))
 
     if submitted:
         # the 2027 rules cannot be reached with real dates yet, so preview counts from the dates entered
@@ -155,14 +164,14 @@ with case_tab:
             st.info(result["summary"])
             for warning in result["warnings"]:
                 st.warning(warning)
-            for name, deadline in result["deadlines"].items():
-                st.metric(name, f"{deadline:%d %b %Y}", f"{(deadline - as_of).days} days left")
+            st.subheader(t("tracker"))
+            ui.report_tracker(language, result["deadlines"], bank_report, police_report, as_of)
             if result["source"]:
                 st.caption(f"Source: {result['source']} (checked against: {result['verified_from']}). Working-day dates are estimates because bank holidays vary by state.")
             if txn < rights.NEW_REGIME:
                 st.caption("Rules change for transactions from 1 Jan 2027.")
 
-            st.subheader("What to do next")
+            st.subheader(t("next"))
             for number, step in enumerate(rights.next_steps(txn, as_of, bank_report, police_report), 1):
                 st.write(f"{number}. {step}")
             st.link_button("Report on cybercrime.gov.in", "https://cybercrime.gov.in/")
@@ -171,7 +180,7 @@ with case_tab:
                 "transaction_date": txn, "loss_rupees": int(loss), "recovered_rupees": int(recovered), "bank": bank["bank"] if bank else None, "ifsc": bank["ifsc"] if bank else None,
                 "bank_alert": alert, "bank_report": bank_report, "police_report": police_report, "checked_as_of": as_of,
             }
-            if agent.configured() and clean and level == "normal":
+            if agent_allowed:
                 try:
                     if not agent_call_allowed():
                         raise agent.AgentError("LimitReached")
@@ -250,11 +259,11 @@ with judges_tab:
     st.write("A three-minute walk through the live app. No login needed.")
     for number, step in enumerate(
         [
-            "Look at the table at the top of the page. Change nothing, and note that one missing report takes the compensation to zero.",
-            "In My case, tick Preview, enter any loss, choose the shared OTP option, and click Check my rights. Both clocks and warnings appear. Add one report date and run it again.",
+            "Look at the table above. Change nothing, and note that one missing report takes the compensation to zero.",
+            "In My deadline, tick Preview, enter any loss, choose the shared OTP option, and click Check my rights. Both clocks and warnings appear. Add one report date and run it again.",
             "In What happened, type: my otp is 482913. It is blocked and never logged.",
             "Replace it with: I am under digital arrest. The app tells the victim to hang up, in three languages.",
-            "In Bank rejected me, paste: You shared your OTP so this is customer negligence. It cites the rule and writes the letter.",
+            "In Bank said no, paste: You shared your OTP so this is customer negligence. It cites the rule and writes the letter.",
             "In Live rules, compare the page hashes and clause results, which are fetched live from RBI.",
             "Download the Proof Pack, then click Delete my session data.",
         ],
@@ -272,4 +281,4 @@ if st.session_state.get("audit"):
         st.session_state.clear()
         st.rerun()
 
-ui.footer()
+ui.footer(language)

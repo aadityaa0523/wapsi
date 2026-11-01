@@ -1,0 +1,68 @@
+from app.i18n import TEXT
+
+
+def add(key, english, hindi, telugu):
+    TEXT[key] = {"English": english, "हिन्दी": hindi, "తెలుగు": telugu}
+
+
+# Page, navigation and form labels. Results from the rules engine stay in English for now.
+for row in [
+    ("bar", "Independent citizen project. Not a government website.", "स्वतंत्र नागरिक परियोजना। यह सरकारी वेबसाइट नहीं है।", "స్వతంత్ర పౌర ప్రాజెక్ట్. ఇది ప్రభుత్వ వెబ్‌సైట్ కాదు."),
+    ("skip", "Skip to main content", "मुख्य सामग्री पर जाएं", "ప్రధాన విషయానికి వెళ్లండి"),
+    ("tagline", "Cyber fraud recovery assistant", "साइबर धोखाधड़ी रिकवरी सहायक", "సైబర్ మోసం రికవరీ సహాయకుడు"),
+    ("helpline", "Helpline", "हेल्पलाइन", "హెల్ప్‌లైన్"),
+    ("case_title", "Rs 10,000 lost after sharing an OTP", "OTP बताने के बाद 10,000 रुपये गए", "OTP చెప్పిన తర్వాత 10,000 రూపాయలు పోయాయి"),
+    ("case_tag", "Example", "उदाहरण", "ఉదాహరణ"),
+    ("bank_report", "Bank report", "बैंक रिपोर्ट", "బ్యాంకు ఫిర్యాదు"),
+    ("police_report", "Police report (1930 or portal)", "पुलिस रिपोर्ट (1930 या पोर्टल)", "పోలీసు ఫిర్యాదు (1930 లేదా పోర్టల్)"),
+    ("deadline", "Deadline for both", "दोनों की अंतिम तिथि", "రెండింటికీ గడువు"),
+    ("done", "Done", "हो गया", "పూర్తైంది"),
+    ("missing", "Missing", "बाकी है", "చేయలేదు"),
+    ("at_risk", "at risk", "जोखिम में", "ప్రమాదంలో ఉంది"),
+    ("human", "The AI drafts. You check every fact and file it yourself.", "AI मसौदा बनाता है। हर तथ्य आप जांचते हैं और शिकायत खुद दर्ज करते हैं।", "AI ముసాయిదా రాస్తుంది. ప్రతి వివరం మీరే చూసి, మీరే ఫిర్యాదు చేస్తారు."),
+    ("services", "What do you need help with?", "आपको किसमें मदद चाहिए?", "మీకు ఏ సహాయం కావాలి?"),
+    ("svc1", "Know my deadline", "मेरी समय-सीमा जानें", "నా గడువు తెలుసుకోండి"),
+    ("svc1d", "See your rights and dates for your case.", "अपने मामले के अधिकार और तिथियां देखें।", "మీ కేసుకు హక్కులు, తేదీలు చూడండి."),
+    ("svc2", "Prepare my police filing", "पुलिस शिकायत तैयार करें", "పోలీసు ఫిర్యాదు సిద్ధం చేయండి"),
+    ("svc2d", "Get the details ready, then file yourself.", "जानकारी तैयार करें, फिर खुद दर्ज करें।", "వివరాలు సిద్ధం చేసి, మీరే ఫిర్యాదు చేయండి."),
+    ("svc3", "My bank said no", "बैंक ने मना कर दिया", "బ్యాంకు నిరాకరించింది"),
+    ("svc3d", "Check the reason and get a reply letter.", "कारण जांचें और जवाबी पत्र पाएं।", "కారణం చూసి, జవాబు లేఖ పొందండి."),
+    ("svc4", "Check the rules", "नियम जांचें", "నియమాలు చూడండి"),
+    ("svc4d", "See RBI's wording checked live.", "RBI के शब्दों की लाइव जांच देखें।", "RBI మాటల లైవ్ తనిఖీ చూడండి."),
+    ("why", "Why both reports matter", "दोनों रिपोर्ट क्यों ज़रूरी हैं", "రెండు ఫిర్యాదులు ఎందుకు ముఖ్యం"),
+    ("proof", "Checked against official sources", "आधिकारिक स्रोतों से जांचा गया", "అధికారిక వనరులతో తనిఖీ చేసింది"),
+    ("start", "Get help now", "अभी मदद लें", "ఇప్పుడే సహాయం పొందండి"),
+    ("tab_case", "My deadline", "मेरी समय-सीमा", "నా గడువు"),
+    ("tab_kit", "Police filing", "पुलिस शिकायत", "పోలీసు ఫిర్యాదు"),
+    ("tab_rejected", "Bank said no", "बैंक का इनकार", "బ్యాంకు నిరాకరణ"),
+    ("tab_rules", "Live rules", "लाइव नियम", "లైవ్ నియమాలు"),
+    ("tab_judges", "For judges", "निर्णायकों के लिए", "న్యాయనిర్ణేతలకు"),
+    ("story", "What happened? (optional)", "क्या हुआ? (वैकल्पिक)", "ఏం జరిగింది? (ఐచ్ఛికం)"),
+    ("ifsc", "Your branch IFSC (optional)", "आपकी शाखा का IFSC (वैकल्पिक)", "మీ బ్రాంచ్ IFSC (ఐచ్ఛికం)"),
+    ("step_money", "1. The money", "1. पैसे की जानकारी", "1. డబ్బు వివరాలు"),
+    ("step_type", "2. What kind of fraud", "2. धोखाधड़ी का प्रकार", "2. మోసం రకం"),
+    ("step_dates", "3. What you have done so far", "3. आपने अब तक क्या किया", "3. ఇప్పటివరకు ఏం చేశారు"),
+    ("txn", "Date of the transaction", "लेन-देन की तिथि", "లావాదేవీ తేదీ"),
+    ("loss", "Amount lost (Rs)", "गई हुई राशि (रुपये)", "పోయిన మొత్తం (రూపాయలు)"),
+    ("recovered", "Amount already recovered (Rs)", "वापस मिली राशि (रुपये)", "తిరిగి వచ్చిన మొత్తం (రూపాయలు)"),
+    ("fault", "What best describes it?", "इनमें से क्या सही है?", "వీటిలో ఏది సరైనది?"),
+    ("account", "Account type", "खाते का प्रकार", "ఖాతా రకం"),
+    ("alert", "Date the bank's message reached you, if any", "बैंक का संदेश मिलने की तिथि, यदि मिला", "బ్యాంకు సందేశం వచ్చిన తేదీ, వస్తే"),
+    ("reported_bank", "Date you told the bank, if done", "बैंक को बताने की तिथि, यदि बताया", "బ్యాంకుకు చెప్పిన తేదీ, చెప్పి ఉంటే"),
+    ("reported_police", "Date you reported to 1930 or cybercrime.gov.in, if done", "1930 या cybercrime.gov.in पर शिकायत की तिथि, यदि की", "1930 లేదా cybercrime.gov.in లో ఫిర్యాదు తేదీ, చేసి ఉంటే"),
+    ("used_before", "I have received this RBI compensation before", "मुझे यह RBI मुआवज़ा पहले मिल चुका है", "ఈ RBI పరిహారం నాకు ఇంతకు ముందే వచ్చింది"),
+    ("submit", "Check my rights", "मेरे अधिकार देखें", "నా హక్కులు చూడండి"),
+    ("next", "What to do next", "आगे क्या करें", "తర్వాత ఏం చేయాలి"),
+    ("tracker", "Your report tracker", "आपकी रिपोर्ट की स्थिति", "మీ ఫిర్యాదుల స్థితి"),
+    ("consent", "I agree to send my story to an AI provider, after my identifiers are masked. I can delete my session data at any time.", "मैं सहमत हूं कि पहचान छिपाने के बाद मेरी बात AI सेवा को भेजी जाए। मैं कभी भी अपना सत्र डेटा हटा सकता हूं।", "నా వివరాలు దాచిన తర్వాత నా కథను AI సేవకు పంపడానికి అంగీకరిస్తున్నాను. నా సెషన్ డేటాను ఎప్పుడైనా తొలగించగలను."),
+    ("foot", "Wapsi is an independent project and not a government service. Not legal advice. Official channels: helpline 1930, cybercrime.gov.in and cms.rbi.org.in. Wapsi never asks for an OTP, PIN, password or a fee.", "Wapsi एक स्वतंत्र परियोजना है, सरकारी सेवा नहीं। यह कानूनी सलाह नहीं है। आधिकारिक माध्यम: हेल्पलाइन 1930, cybercrime.gov.in और cms.rbi.org.in। Wapsi कभी OTP, PIN, पासवर्ड या शुल्क नहीं मांगता।", "Wapsi స్వతంత్ర ప్రాజెక్ట్, ప్రభుత్వ సేవ కాదు. ఇది న్యాయ సలహా కాదు. అధికారిక మార్గాలు: హెల్ప్‌లైన్ 1930, cybercrime.gov.in, cms.rbi.org.in. Wapsi ఎప్పుడూ OTP, PIN, పాస్‌వర్డ్ లేదా రుసుము అడగదు."),
+]:
+    add(*row)
+
+FAULT_TEXT = {
+    "third_party": {"हिन्दी": "मैंने कुछ नहीं बताया, फिर भी पैसे कट गए", "తెలుగు": "నేను ఏమీ చెప్పలేదు, అయినా డబ్బు పోయింది"},
+    "negligence": {"हिन्दी": "मैंने OTP, PIN या पासवर्ड बताया, या गलत ऐप डाला", "తెలుగు": "నేను OTP, PIN లేదా పాస్‌వర్డ్ చెప్పాను, లేదా చెడ్డ యాప్ వేసుకున్నాను"},
+    "coerced": {"हिन्दी": "धमकी या दबाव में पैसे दिए, जैसे डिजिटल अरेस्ट", "తెలుగు": "బెదిరింపు వల్ల డబ్బు ఇచ్చాను, డిజిటల్ అరెస్ట్ లాగా"},
+    "bank_fault": {"हिन्दी": "बैंक की गलती थी", "తెలుగు": "బ్యాంకు తప్పు చేసింది"},
+    "authorised": {"हिन्दी": "मैंने खुद भुगतान मंज़ूर किया, जैसे निवेश धोखाधड़ी", "తెలుగు": "నేనే చెల్లింపు ఆమోదించాను, పెట్టుబడి మోసం లాగా"},
+}

@@ -85,8 +85,10 @@ def test_two_report_table_comes_from_the_engine():
 
 
 def test_every_message_exists_in_all_languages():
+    from app import labels
     from app.i18n import LANGUAGES, TEXT
 
+    assert all(labels.FAULT_TEXT[fault].get(language) for fault in labels.FAULT_TEXT for language in LANGUAGES[1:])
     assert all(TEXT[key].get(language) for key in TEXT for language in LANGUAGES)
 
 

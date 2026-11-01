@@ -31,7 +31,7 @@ def test_form_shows_rights(monkeypatch):
     app = run_app(monkeypatch)
     app.date_input[0].set_value(date(2026, 10, 30))
     app.number_input[0].set_value(5000)
-    app.selectbox[0].set_value("I shared an OTP, PIN or password, or installed a bad app")
+    app.selectbox[1].set_value("I shared an OTP, PIN or password, or installed a bad app")
     app.button[0].click().run()
     assert not app.exception
     assert any("until you report" in info.value for info in app.info)
@@ -42,7 +42,7 @@ def test_preview_reaches_2027_rules_and_is_labelled(monkeypatch):
     app.checkbox[0].check().run()
     app.date_input[0].set_value(date(2027, 3, 1))
     app.number_input[0].set_value(10000)
-    app.selectbox[0].set_value("I shared an OTP, PIN or password, or installed a bad app")
+    app.selectbox[1].set_value("I shared an OTP, PIN or password, or installed a bad app")
     app.date_input[2].set_value(date(2027, 3, 1))
     app.button[0].click().run()
     assert not app.exception
@@ -58,3 +58,13 @@ def test_preview_starts_on_the_new_rules(monkeypatch):
     app.button[0].click().run()
     assert not app.exception
     assert any(header.value == "RBI directions effective 1 Jan 2027" for header in app.subheader)
+
+
+def test_language_switch_translates_form_and_keeps_working(monkeypatch):
+    app = run_app(monkeypatch)
+    app.radio[0].set_value("हिन्दी").run()
+    assert not app.exception
+    assert app.text_area[0].label == "क्या हुआ? (वैकल्पिक)"
+    app.number_input[0].set_value(5000)
+    app.button[0].click().run()
+    assert not app.exception

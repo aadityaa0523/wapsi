@@ -35,11 +35,11 @@ To turn the agent on, set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` as secre
 - `streamlit_app.py`: the web app. `app/main.py` serves the same checks as a FastAPI endpoint, for Docker hosts.
 
 - `app/portal.py`: prepares a filing kit from the police portal's published notice, including its 200-character minimum and banned characters.
-- `app/i18n.py`: safety-critical messages in Hindi and Telugu. The rest of the app is in English.
+- `app/i18n.py`, `app/labels.py`: page, form and safety messages in Hindi and Telugu. Rule results are in English for now.
 
 Not legal advice. Not reviewed by any bank, regulator or lawyer.
 
-The page structure (hero, then one case played through step by step, then human approval) is inspired by CrossBeam, 1st place at Anthropic's Claude Code hackathon. All code, text and calculations here are this project's own.
+The interface follows public accessibility and service-design principles from India's UX4G design system and GIGW, with this project's own code, text and branding. It is not a UX4G product and has not been audited against either.
 
 ## Where the agent stops
 

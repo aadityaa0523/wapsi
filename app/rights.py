@@ -104,7 +104,7 @@ def next_steps(txn, today, bank_report, police_report):
     if bank_report is None:
         steps.append("Tell your bank through its official helpline and block the card or UPI. Then report in writing and keep the reference and date.")
     if bank_report is not None and police_report is not None:
-        steps.append("Both reports are done. Keep the proof, and if the bank rejects you or goes silent, use the Bank rejected me tab.")
+        steps.append("Both reports are done. Keep the proof, and if the bank rejects you or goes silent, use the Bank said no tab.")
     steps.append("Save screenshots, SMS alerts and the scammer's numbers. Do not delete anything.")
     steps.append("Beware of anyone offering to recover your money for a fee. That is a common second scam.")
     return steps
