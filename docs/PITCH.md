@@ -4,13 +4,31 @@ Forge '26, Theme 1, Problem 3: Autonomous Public Service and Bureaucracy Executi
 
 ## Problem statement
 
-### Target issue and context
+### The problem in one line
 
-India recorded more than 65.89 lakh financial fraud complaints on the national cybercrime portal from 2021 to 2025, with more than Rs 55,050 crore reported. More than Rs 8,189 crore of that was marked as lien, which means held and not necessarily returned to victims ([PIB, 21 July 2026](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2287039&reg=48&lang=2)).
+**After cyber fraud, victims in India have to deal with their bank and the police separately, in panic, under deadlines and rules nobody has told them about, so they can lose money they were entitled to protect.**
 
-From 1 January 2027, the rules change. A person who shared an OTP or was otherwise negligent can now get compensation: 85% of the net loss, up to Rs 25,000, for gross losses up to Rs 50,000, once in a lifetime. But they must report to **both** their bank **and** the police route (the national portal or 1930) within **five calendar days** of the fraud ([RBI directions, paragraph 76T](https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0)).
+### What it looks like in real life
 
-Someone who has just been defrauded is frightened, and has no way of knowing there are two separate clocks. Report to only one place, or one day late, and the compensation can be lost. Paragraph 76G tells banks to advise customers to report on both routes, but nothing we found tracks both for the victim.
+*An illustrative example, not a real case:* a retired man gets a call saying his KYC has expired. He shares an OTP and Rs 10,000 leaves his account. He calls his bank and thinks he has done everything. He now faces questions he cannot answer:
+
+- Have I done enough, or do I also need to report to the police, and how?
+- Is there a deadline? When did it start?
+- The bank says the fraud was my fault. Do I just accept that?
+- Someone has called offering to recover my money for a fee. Is that real?
+
+### Why this is a problem today
+
+These rules already apply under the [RBI 2017 circular](https://www.rbi.org.in/scripts/FS_Notification.aspx?Id=11040):
+
+- **Delay costs money.** If someone shared credentials, they bear the loss until they report to the bank (paragraph 7). Zero liability for a third-party breach needs a report within 3 working days of the bank's message (paragraph 6).
+- **Banks' refusals can be challenged, but few would know how.** The burden of proving customer liability is on the bank (paragraph 12), and complaints must be resolved within 90 days (paragraph 10).
+
+The scale is large: more than 65.89 lakh financial fraud complaints and more than Rs 55,050 crore reported on the national portal from 2021 to 2025. More than Rs 8,189 crore of that was marked as lien, which means held and not necessarily returned ([PIB, 21 July 2026](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2287039&reg=48&lang=2)).
+
+### Why it gets more urgent on 1 January 2027
+
+A person who shared an OTP can then claim compensation: 85% of the net loss, up to Rs 25,000, for gross losses up to Rs 50,000, once in a lifetime. But they must report to **both** their bank **and** the police route within **five calendar days** ([RBI directions, paragraph 76T](https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0)). In the example above, calling only the bank could cost up to Rs 8,500.
 
 ### Target audience
 
