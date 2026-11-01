@@ -39,7 +39,7 @@ def test_form_shows_rights(monkeypatch):
     app = run_app(monkeypatch)
     named(app.date_input, TXN).set_value(date(2026, 10, 30))
     named(app.number_input, LOSS).set_value(5000)
-    app.selectbox[1].set_value("I shared an OTP, PIN or password, or installed a bad app")
+    named(app.selectbox, "What best describes it?").set_value("I shared an OTP, PIN or password, or installed a bad app")
     named(app.button, FORM_BUTTON).click().run()
     assert not app.exception
     assert any("until you report" in info.value for info in app.info)
@@ -50,7 +50,7 @@ def test_preview_reaches_2027_rules_and_is_labelled(monkeypatch):
     app.checkbox[0].check().run()
     named(app.date_input, TXN).set_value(date(2027, 3, 1))
     named(app.number_input, LOSS).set_value(10000)
-    app.selectbox[1].set_value("I shared an OTP, PIN or password, or installed a bad app")
+    named(app.selectbox, "What best describes it?").set_value("I shared an OTP, PIN or password, or installed a bad app")
     named(app.date_input, TOLD_BANK).set_value(date(2027, 3, 1))
     named(app.button, FORM_BUTTON).click().run()
     assert not app.exception
@@ -151,3 +151,10 @@ def test_earlier_asks_how_many_days(monkeypatch):
     named(app.number_input, "How many days ago?").set_value(9).run()
     named(app.button, "Continue").click().run()
     assert not app.exception and app.session_state["wizard"]["days_ago"] == 9
+
+
+def test_my_deadline_is_prefilled_from_the_questions(monkeypatch):
+    app = through_questions(run_app(monkeypatch))
+    assert named(app.number_input, LOSS).value == 10000
+    assert named(app.selectbox, "What best describes it?").value == "I shared an OTP, PIN or password, or installed a bad app"
+    assert named(app.date_input, TXN).value == date(2027, 1, 1)

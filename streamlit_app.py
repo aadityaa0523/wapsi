@@ -114,24 +114,25 @@ with case_tab:
         if classified["fault"] in FAULTS.values():
             suggested = list(FAULTS.values()).index(classified["fault"])
 
-    ifsc = st.text_input(t("ifsc"), max_chars=11)
-    bank = None
-    if ifsc:
-        try:
-            bank = bank_details(ifsc)
-            if bank:
-                st.caption(f"{bank['bank']}, {bank['branch']}, {bank['city']}")
-            else:
-                st.warning("No branch found for that IFSC.")
-        except ValueError as invalid:
-            st.warning(str(invalid))
-        except (httpx.HTTPError, KeyError):
-            st.warning("The IFSC lookup is unavailable right now. You can continue without it.")
-
-    preview = st.checkbox("Preview the rules from 1 January 2027, using future dates")
+    preview = st.checkbox("Preview the rules from 1 January 2027, using future dates", value=st.session_state.get("wizard", {}).get("step") == wizard.LAST_STEP and today < rights.NEW_REGIME)
     latest = date(2028, 12, 31) if preview else today
 
-    with st.expander("More than one transaction or bank?"):
+    with st.expander(t("optional_extras")):
+        ifsc = st.text_input(t("ifsc"), max_chars=11)
+        bank = None
+        if ifsc:
+            try:
+                bank = bank_details(ifsc)
+                if bank:
+                    st.caption(f"{bank['bank']}, {bank['branch']}, {bank['city']}")
+                else:
+                    st.warning("No branch found for that IFSC.")
+            except ValueError as invalid:
+                st.warning(str(invalid))
+            except (httpx.HTTPError, KeyError):
+                st.warning("The IFSC lookup is unavailable right now. You can continue without it.")
+
+        st.markdown("**More than one transaction or bank?**")
         st.caption("Add each one. Each has its own clock, so Wapsi shows the safest date for reporting them all.")
         count = st.radio("How many transactions?", [1, 2, 3, 4, 5], horizontal=True, key="transaction_count")
         rows = []
@@ -156,27 +157,32 @@ with case_tab:
             if len(plan["banks"]) > 1:
                 st.info(f"Report to each bank separately: {len(plan['banks'])} banks listed.")
 
-    evidence = st.file_uploader("Fingerprint my evidence (optional)", type=extras.EVIDENCE_TYPES, accept_multiple_files=True, help="Wapsi keeps only a SHA-256 fingerprint, never the file. Add it to your Proof Pack to show that a file has not changed since now.")
-    for item in evidence or []:
-        if item.size > extras.MAX_EVIDENCE_BYTES:
-            st.warning("One file is over 10 MB and was skipped.")
-        else:
-            event = extras.evidence_event(item.getvalue(), item.type)
-            log_event(event)
-            st.caption(event)
+        evidence = st.file_uploader("Fingerprint my evidence (optional)", type=extras.EVIDENCE_TYPES, accept_multiple_files=True, help="Wapsi keeps only a SHA-256 fingerprint, never the file. Add it to your Proof Pack to show that a file has not changed since now.")
+        for item in evidence or []:
+            if item.size > extras.MAX_EVIDENCE_BYTES:
+                st.warning("One file is over 10 MB and was skipped.")
+            else:
+                event = extras.evidence_event(item.getvalue(), item.type)
+                log_event(event)
+                st.caption(event)
+
+    guided = st.session_state.get("wizard", {})
+    guided_done = guided.get("step") == wizard.LAST_STEP
     with st.form("case"):
-        st.markdown(f'<div class="wp-group">{t("step_money")}</div>', unsafe_allow_html=True)
-        txn = st.date_input(t("txn"), value=rights.NEW_REGIME if preview else today, min_value=rights.NEW_REGIME if preview else date(2017, 7, 6), max_value=latest, key=f"txn_{preview}")
-        loss = st.number_input(t("loss"), min_value=1, value=None, step=1)
-        recovered = st.number_input(t("recovered"), min_value=0, value=0, step=1)
-        account = st.selectbox(t("account"), rights.LIABILITY_CAPS)
-        st.markdown(f'<div class="wp-group">{t("step_type")}</div>', unsafe_allow_html=True)
+        date_col, loss_col = st.columns(2)
+        txn = date_col.date_input(t("txn"), value=rights.NEW_REGIME if preview else today, min_value=rights.NEW_REGIME if preview else date(2017, 7, 6), max_value=latest, key=f"txn_{preview}")
+        loss = loss_col.number_input(t("loss"), min_value=1, value=guided.get("amount"), step=1)
+        if guided_done:
+            suggested = list(FAULTS.values()).index(rights.NEGLIGENCE if guided["shared"] else rights.THIRD_PARTY)
         fault = st.selectbox(t("fault"), FAULTS, index=suggested, format_func=lambda label: FAULT_TEXT[FAULTS[label]].get(language, label))
-        st.markdown(f'<div class="wp-group">{t("step_dates")}</div>', unsafe_allow_html=True)
-        alert = st.date_input(t("alert"), value=None, max_value=latest)
-        bank_report = st.date_input(t("reported_bank"), value=None, max_value=latest)
-        police_report = st.date_input(t("reported_police"), value=None, max_value=latest)
-        used_before = st.checkbox(t("used_before"))
+        bank_col, police_col = st.columns(2)
+        bank_report = bank_col.date_input(t("reported_bank"), value=None, max_value=latest)
+        police_report = police_col.date_input(t("reported_police"), value=None, max_value=latest)
+        with st.expander(t("more_details")):
+            recovered = st.number_input(t("recovered"), min_value=0, value=0, step=1)
+            account = st.selectbox(t("account"), rights.LIABILITY_CAPS)
+            alert = st.date_input(t("alert"), value=None, max_value=latest)
+            used_before = st.checkbox(t("used_before"))
         submitted = st.form_submit_button(t("submit"))
 
     if submitted:
