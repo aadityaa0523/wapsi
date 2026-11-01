@@ -6,8 +6,8 @@ from app.i18n import TEXT
 # Only constants and engine-computed values go through unsafe_allow_html, never user text
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&display=swap');
-:root { --primary: #12326e; --primary-dark: #0b2352; --accent: #0b6fb8; --saffron: #ff9933; --green: #0f6b06; --danger: #a4161a; --line: #d8deea; --ink: #111a33; --muted: #4a5468; --page: #ffffff; --tint: #eef3fb; }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Serif:wght@400;500&family=Noto+Serif+Devanagari:wght@400;500&family=Noto+Serif+Telugu:wght@400;500&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&display=swap');
+:root { --primary: #15245a; --primary-dark: #0e1a45; --serif: 'Noto Serif', 'Noto Serif Devanagari', 'Noto Serif Telugu', serif; --accent: #0b6fb8; --saffron: #ff9933; --green: #0f6b06; --danger: #b3361b; --line: #d8deea; --ink: #111a33; --muted: #4a5468; --page: #ffffff; --tint: #eef3fb; }
 html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp textarea, .stApp button, .stApp li { font-family: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', sans-serif; }
 .stApp { background: var(--page); }
 iframe[title="streamlit.components.v1.html"], [data-testid="stIFrame"] { border-radius: 18px; }
@@ -94,6 +94,20 @@ iframe { border: 1px solid var(--line) !important; border-radius: 4px; }
 .wp-foot a { color: #fff !important; display: block; padding: 3px 0; }
 .wp-foot-note { border-top: 1px solid #3a5a96; padding-top: 10px; }
 @media (max-width: 640px) { .wp-foot-grid { grid-template-columns: 1fr; } .wp-mark { width: 46px; height: 46px; font-size: 1.4rem; } .wp-nav a { padding: 11px 10px; font-size: .88rem; } }
+.wp-lead { padding: clamp(36px, 7vw, 72px) 0 clamp(20px, 3vw, 32px); }
+.wp-lead h1 { font-family: var(--serif) !important; color: var(--primary) !important; font-size: clamp(2.3rem, 6vw, 4rem) !important; font-weight: 400 !important; line-height: 1.12 !important; letter-spacing: -.01em; max-width: 15em; padding: 0 0 14px !important; }
+.wp-lead p { color: var(--ink); font-size: clamp(1.05rem, 2vw, 1.3rem); line-height: 1.5; max-width: 34em; margin: 0; }
+.wp-name, .wp-hi { font-family: var(--serif); font-weight: 500; }
+.wp-mark { font-family: var(--serif); font-weight: 500; }
+.wp-nav a { font-weight: 500; }
+.st-key-wizard { border: 1px solid var(--line); border-top: 4px solid var(--saffron); border-radius: 8px; }
+.wp-q { font-family: var(--serif) !important; font-weight: 400 !important; color: var(--primary) !important; }
+.st-key-wizard button { border-radius: 999px !important; }
+.st-key-wizard button p { font-weight: 600 !important; }
+a.wp-big { border-radius: 999px; }
+.wp-section { margin-top: 72px; background: transparent; border-left: none; border-bottom: 2px solid var(--primary); padding: 0 0 8px; font-family: var(--serif); font-weight: 400; font-size: 1.6rem; }
+.wp-foot { margin-top: 96px; }
+@media (max-width: 640px) { .wp-notice { display: none; } .wp-lead { padding: 18px 0 6px; } .wp-lead h1 { font-size: 1.75rem !important; padding-bottom: 6px !important; } .wp-lead p { display: none; } .wp-brand { padding: 4px 0 8px; } .wp-nav a { padding: 10px 8px; } .wp-section { margin-top: 44px; } }
 </style>
 """
 SIZES = {"A−": "14px", "A": "16px", "A+": "19px"}
@@ -122,6 +136,10 @@ def brand(language):
 <nav class="wp-nav wp-bleed" aria-label="Main"><a href="#top">{t('nav_home')}</a><a href="#main">{t('more_help')}</a><a href="https://cybercrime.gov.in/" target="_blank" rel="noopener">{t('nav_ncrp')}</a><a href="https://cms.rbi.org.in/" target="_blank" rel="noopener">{t('nav_rbi')}</a></nav>
 <div class="wp-notice wp-bleed" id="top"><b>{t('notice_label')}</b><span>{t('notice')}</span></div>"""
     )
+
+
+def lead(language):
+    html(f"""<section class="wp-lead"><h1>{TEXT['lead_title'][language]}</h1><p>{TEXT['lead_sub'][language]}</p></section>""")
 
 
 def section(text, anchor=None):

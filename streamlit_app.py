@@ -72,6 +72,8 @@ ui.brand(language)
 
 today = datetime.now(IST).date()
 now = datetime.now(IST)
+if st.session_state.get("wizard", {}).get("step", 0) < wizard.LAST_STEP:
+    ui.lead(language)
 wizard.run(language, now)
 st.caption(t("disclaimer"))
 ui.section(t("more_help"), "main")

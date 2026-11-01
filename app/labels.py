@@ -97,6 +97,8 @@ for row in [
     ("more_help", "More help and tools", "और मदद और साधन", "మరింత సహాయం, సాధనాలు"),
     ("more_details", "More details (optional)", "और जानकारी (वैकल्पिक)", "మరిన్ని వివరాలు (ఐచ్ఛికం)"),
     ("optional_extras", "Optional: your bank, several transactions, evidence", "वैकल्पिक: आपका बैंक, कई लेन-देन, प्रमाण", "ఐచ్ఛికం: మీ బ్యాంకు, అనేక లావాదేవీలు, రుజువులు"),
+    ("lead_title", "Lost money to cyber fraud? Start here.", "साइबर धोखाधड़ी में पैसा गया? यहां से शुरू करें।", "సైబర్ మోసంలో డబ్బు పోయిందా? ఇక్కడ ప్రారంభించండి."),
+    ("lead_sub", "Answer four short questions. See your deadlines and the one thing to do next.", "चार छोटे सवालों के जवाब दें। अपनी समय-सीमा और अगला कदम देखें।", "నాలుగు చిన్న ప్రశ్నలకు జవాబు ఇవ్వండి. మీ గడువులు, తర్వాతి అడుగు చూడండి."),
     ("tab_shield", "Is this a scam?", "क्या यह धोखा है?", "ఇది మోసమా?"),
     ("story", "What happened? (optional)", "क्या हुआ? (वैकल्पिक)", "ఏం జరిగింది? (ఐచ్ఛికం)"),
     ("ifsc", "Your branch IFSC (optional)", "आपकी शाखा का IFSC (वैकल्पिक)", "మీ బ్రాంచ్ IFSC (ఐచ్ఛికం)"),

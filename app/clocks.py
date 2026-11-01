@@ -9,27 +9,28 @@ KEYS = ["clock_title", "clock_sub", "clock_bank", "clock_police", "clock_advised
 # Only numbers and translated constants reach this page, never user text
 PAGE = """<!doctype html><html><head><meta charset="utf-8">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700;800&family=Noto+Sans+Devanagari:wght@400;700;800&family=Noto+Sans+Telugu:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Serif:wght@400&family=Noto+Serif+Devanagari:wght@400&family=Noto+Serif+Telugu:wght@400&display=swap');
 * { box-sizing: border-box; margin: 0; }
+html, body { overflow: hidden; }
 body { font-family: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', sans-serif; background: #fff; color: #111a33; padding: 0; }
-h1 { background: #12326e; color: #fff; font-size: clamp(1.05rem, 2.8vw, 1.45rem); line-height: 1.3; font-weight: 700; padding: 10px clamp(12px, 3vw, 22px); border-bottom: 4px solid #ff9933; }
+h1 { color: #15245a; font-family: 'Noto Serif', 'Noto Serif Devanagari', 'Noto Serif Telugu', serif; font-size: clamp(1.5rem, 3.6vw, 2.3rem); line-height: 1.2; font-weight: 400; padding: 18px clamp(12px, 3vw, 22px) 4px; }
 .panel { padding: 12px clamp(10px, 3vw, 22px) 14px; }
 .sub { color: #111a33; font-size: clamp(.92rem, 2vw, 1.05rem); }
 .room { display: grid; grid-template-columns: 1fr minmax(92px, 170px) 1fr; align-items: center; gap: clamp(2px, 2vw, 22px); margin-top: 16px; }
 .clock { position: relative; width: 100%; max-width: 250px; aspect-ratio: 1; justify-self: center; }
 .clock svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
-.track { fill: none; stroke: #e3e7f0; stroke-width: 9; }
-.arc { fill: none; stroke-width: 9; stroke-linecap: round; }
+.track { fill: none; stroke: #e6e9f2; stroke-width: 4; }
+.arc { fill: none; stroke-width: 4; stroke-linecap: round; }
 .face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 14%; }
 .name { font-size: clamp(.72rem, 2.2vw, 1rem); font-weight: 700; color: #111a33; }
-.time { font-size: clamp(1rem, 3.6vw, 1.75rem); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.time { font-size: clamp(1rem, 3.4vw, 1.6rem); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .unit { font-size: clamp(.68rem, 1.8vw, .85rem); color: #4a5468; }
 .money { text-align: center; }
-.amount { font-size: clamp(1.25rem, 5vw, 2.7rem); font-weight: 800; color: #a4161a; line-height: 1.1; white-space: nowrap; }
+.amount { font-family: 'Noto Serif', 'Noto Serif Devanagari', 'Noto Serif Telugu', serif; font-size: clamp(1.4rem, 5vw, 3rem); font-weight: 400; color: #15245a; line-height: 1.1; white-space: nowrap; }
 .label { font-size: clamp(.72rem, 2vw, .95rem); color: #111a33; font-weight: 600; }
-.state { margin-top: 14px; padding: 9px 14px; border-radius: 8px; font-weight: 700; text-align: center; font-size: clamp(.84rem, 2vw, 1rem); }
-.run { background: #fff3e0; border: 1px solid #ff9933; color: #111a33; } .ok { background: #0f6b06; color: #fff; } .bad { background: #a4161a; color: #fff; }
-.note { color: #4a5468; font-size: .76rem; text-align: center; margin-top: 7px; }
+.state { margin-top: 14px; padding: 10px 16px; border-radius: 999px; font-weight: 700; text-align: center; font-size: clamp(.84rem, 2vw, 1rem); }
+.run { background: #fff3e0; border: 1px solid #ff9933; color: #111a33; } .ok { background: #0f6b06; color: #fff; } .bad { background: #b3361b; color: #fff; }
+.note { color: #4a5468; font-size: .76rem; text-align: center; margin-top: 7px; padding-bottom: 14px; }
 @media (max-width: 560px) {
   .room { grid-template-columns: 1fr 1fr; gap: 8px; }
   .money { grid-column: 1 / -1; order: -1; }
@@ -48,7 +49,7 @@ const t = data.text;
 const R = 54, C = 2 * Math.PI * R;
 function face(id, name, done, optional, left) {
   const fraction = done ? 1 : Math.max(0, Math.min(1, left / data.total));
-  const color = done ? "#138808" : left <= 0 ? "#a4161a" : optional ? "#12326e" : (id === "bank" ? "#ff9933" : "#138808");
+  const color = done ? "#138808" : left <= 0 ? "#b3361b" : optional ? "#15245a" : (id === "bank" ? "#ff9933" : "#138808");
   const ink = color === "#ff9933" ? "#a85400" : color === "#138808" ? "#0f6b06" : color;
   let main, unit = "";
   if (done) { main = "&#10003;"; unit = t.clock_done; }
