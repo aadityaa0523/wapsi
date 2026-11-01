@@ -7,7 +7,7 @@ from app.i18n import TEXT
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&display=swap');
-:root { --primary: #1f2f7a; --primary-dark: #141f57; --accent: #0b6fb8; --saffron: #ff9933; --green: #0f6b06; --danger: #a4161a; --line: #d8deea; --ink: #111a33; --muted: #4a5468; --page: #f5f7fb; --tint: #eef1fb; }
+:root { --primary: #12326e; --primary-dark: #0b2352; --accent: #0b6fb8; --saffron: #ff9933; --green: #0f6b06; --danger: #a4161a; --line: #d8deea; --ink: #111a33; --muted: #4a5468; --page: #ffffff; --tint: #eef3fb; }
 html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp textarea, .stApp button, .stApp li { font-family: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', sans-serif; }
 .stApp { background: var(--page); }
 iframe[title="streamlit.components.v1.html"], [data-testid="stIFrame"] { border-radius: 18px; }
@@ -60,6 +60,30 @@ a.wp-call { display: inline-flex; align-items: center; min-height: 44px; padding
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 @media (max-width: 820px) { .wp-stats { grid-template-columns: 1fr; } }
 @media (max-width: 480px) { .wp-name { font-size: 1.6rem; } .wp-table { font-size: .86rem; } }
+.wp-bar { border-bottom: none; }
+.wp-flagline { height: 5px; background: linear-gradient(90deg, var(--saffron) 0 33.3%, #fff 33.3% 66.6%, #138808 66.6%); }
+.wp-brand { border-bottom: 1px solid var(--line); }
+.wp-mark { width: 56px; height: 56px; flex: none; border: 3px solid var(--primary); border-radius: 8px; color: var(--primary); font-weight: 700; font-size: 1.7rem; display: flex; align-items: center; justify-content: center; }
+.wp-id { display: flex; align-items: center; gap: 12px; }
+.wp-hi { color: var(--primary); font-size: 1.05rem; font-weight: 700; }
+.wp-nav { background: var(--primary); display: flex; flex-wrap: wrap; gap: 0; }
+.wp-nav a { color: #fff !important; text-decoration: none; font-weight: 600; font-size: .94rem; padding: 12px 14px; min-height: 44px; }
+.wp-nav a:hover { background: var(--primary-dark); text-decoration: underline; }
+.wp-notice { display: flex; gap: 10px; align-items: baseline; background: #fff8ec; border-bottom: 1px solid #f2d9ad; font-size: .92rem; padding-top: 8px; padding-bottom: 8px; color: var(--ink); }
+.wp-notice b { background: var(--danger); color: #fff; padding: 1px 8px; border-radius: 3px; white-space: nowrap; font-size: .82rem; }
+.wp-section { color: var(--primary); font-size: 1.15rem; padding: 8px 12px; background: var(--tint); border-left: 5px solid var(--primary); }
+.wp-table, [data-testid="stForm"], .wp-stat { border-radius: 4px; }
+.wp-table th { background: var(--primary); color: #fff; }
+.stTabs [data-baseweb="tab-list"] { border-radius: 4px; background: var(--tint); }
+.stTabs [data-baseweb="tab"] { border-radius: 3px; }
+.stFormSubmitButton button, .stDownloadButton button, .stLinkButton a { border-radius: 4px !important; }
+iframe { border: 1px solid var(--line) !important; border-radius: 4px; }
+.wp-foot { border-top: 5px solid #138808; padding-top: 20px; }
+.wp-foot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 12px; }
+.wp-foot b { display: block; color: #fff; margin-bottom: 4px; }
+.wp-foot a { color: #fff !important; display: block; padding: 3px 0; }
+.wp-foot-note { border-top: 1px solid #3a5a96; padding-top: 10px; }
+@media (max-width: 640px) { .wp-foot-grid { grid-template-columns: 1fr; } .wp-mark { width: 46px; height: 46px; font-size: 1.4rem; } .wp-nav a { padding: 11px 10px; font-size: .88rem; } }
 </style>
 """
 SIZES = {"A−": "14px", "A": "16px", "A+": "19px"}
@@ -74,7 +98,7 @@ def page_style():
 
 
 def top_bar(language):
-    html(f"""<div class="wp-bar wp-bleed"><span>{TEXT['bar'][language]}</span><a href="#main">{TEXT['skip'][language]}</a></div>""")
+    html(f"""<div class="wp-bar wp-bleed"><span>{TEXT['bar'][language]}</span><a href="#main">{TEXT['skip'][language]}</a></div><div class="wp-flagline wp-bleed"></div>""")
 
 
 def text_size(choice):
@@ -82,7 +106,12 @@ def text_size(choice):
 
 
 def brand(language):
-    html(f"""<div class="wp-brand"><div><div class="wp-name">Wapsi <span>वापसी · వాపసీ</span></div><div class="wp-tagline">{TEXT['tagline'][language]}</div></div><a class="wp-call" href="tel:1930">{TEXT['helpline'][language]}: 1930</a></div>""")
+    t = lambda key: TEXT[key][language]
+    html(
+        f"""<div class="wp-brand"><div class="wp-id"><div class="wp-mark" aria-hidden="true">W</div><div><div class="wp-hi">वापसी · వాపసీ</div><div class="wp-name">Wapsi</div><div class="wp-tagline">{t('tagline')}</div></div></div><a class="wp-call" href="tel:1930">{t('helpline')}: 1930</a></div>
+<nav class="wp-nav wp-bleed" aria-label="Main"><a href="#top">{t('nav_home')}</a><a href="#main">{t('nav_help')}</a><a href="#why">{t('nav_why')}</a><a href="#proof">{t('nav_proof')}</a><a href="https://cybercrime.gov.in/" target="_blank" rel="noopener">{t('nav_ncrp')}</a><a href="https://cms.rbi.org.in/" target="_blank" rel="noopener">{t('nav_rbi')}</a></nav>
+<div class="wp-notice wp-bleed" id="top"><b>{t('notice_label')}</b><span>{t('notice')}</span></div>"""
+    )
 
 
 def section(text, anchor=None):
@@ -90,8 +119,16 @@ def section(text, anchor=None):
     html(f'<div class="wp-section"{attr}>{text}</div>')
 
 
-def footer(language):
-    html(f'<div class="wp-foot wp-bleed">{TEXT["foot"][language]}</div>')
+def footer(language, checked_at):
+    t = lambda key: TEXT[key][language]
+    repo = "https://github.com/aadityaa0523/wapsi"
+    html(
+        f"""<footer class="wp-foot wp-bleed"><div class="wp-foot-grid">
+<div><b>{t('foot_official')}</b><a href="tel:1930">{t('helpline')} 1930</a><a href="https://cybercrime.gov.in/" target="_blank" rel="noopener">cybercrime.gov.in</a><a href="https://cms.rbi.org.in/" target="_blank" rel="noopener">cms.rbi.org.in</a></div>
+<div><b>{t('foot_about')}</b><a href="{repo}/blob/main/SECURITY.md" target="_blank" rel="noopener">{t('foot_security')}</a><a href="{repo}" target="_blank" rel="noopener">{t('foot_code')}</a></div>
+<div><b>{t('foot_checked')}</b><span>{checked_at}</span></div>
+</div><div class="wp-foot-note">{t('foot')}</div></footer>"""
+    )
 
 
 def stats(status):

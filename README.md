@@ -42,7 +42,7 @@ To turn the agent on, set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` as secre
 
 Not legal advice. Not reviewed by any bank, regulator or lawyer.
 
-The interface follows public accessibility and service-design principles from India's UX4G design system and GIGW, with this project's own code, text and branding. It is not a UX4G product and has not been audited against either.
+The interface follows public accessibility and service-design principles from India's UX4G design system and GIGW, with this project's own code, text and branding. It deliberately uses no national emblem or government name, and says on every page that it is independent. It is not a UX4G product and has not been audited against either.
 
 ## Where the agent stops
 

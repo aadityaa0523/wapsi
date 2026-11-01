@@ -78,9 +78,9 @@ seconds_left = (deadline_end - (datetime.combine(clock_txn, datetime.min.time(),
 with clock_room:
     clocks.show(rights.clock_state(clock_txn, int(clock_loss), clock_shared, told_bank, told_police, seconds_left, preview_clock), language)
 st.caption(t("disclaimer"))
-ui.section(t("why"))
+ui.section(t("why"), "why")
 ui.two_report_table()
-ui.section(t("proof"))
+ui.section(t("proof"), "proof")
 ui.stats(live_status())
 ui.section(t("start"), "main")
 
@@ -352,4 +352,4 @@ if st.session_state.get("audit"):
         st.session_state.clear()
         st.rerun()
 
-ui.footer(language)
+ui.footer(language, f"{datetime.fromisoformat(status['generated_at']).astimezone(IST):%d %b %Y, %H:%M} IST" if status["generated_at"] != "now" else "")
