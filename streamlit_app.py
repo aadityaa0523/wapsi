@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 import streamlit as st
 
-from app import agent, checks, decoder, extras, portal, rights, ui
+from app import agent, checks, clocks, decoder, extras, portal, rights, ui
 from app.i18n import LANGUAGES, TEXT
 from app.labels import FAULT_TEXT
 from app.safety import SecretBlocked, append_event, chain_is_valid, proof_pack, sanitize, triage
@@ -59,17 +59,31 @@ language = language_col.radio("Language", LANGUAGES, horizontal=True, label_visi
 ui.text_size(size_col.segmented_control("Text size", list(ui.SIZES), default="A", label_visibility="collapsed"))
 ui.brand(language)
 st.error(t("emergency"))
-ui.hero(language)
+
+today = datetime.now(IST).date()
+now = datetime.now(IST)
+first_rule_day = max(today, rights.NEW_REGIME)
+clock_room = st.container()
+when_col, amount_col, kind_col = st.columns(3)
+clock_txn = when_col.date_input(t("set_when"), value=first_rule_day, min_value=rights.NEW_REGIME, max_value=date(2028, 12, 31), key="clock_when")
+clock_loss = amount_col.number_input(t("set_amount"), min_value=1, value=10000, step=500, key="clock_amount")
+clock_shared = kind_col.radio(t("set_kind"), [t("yes"), t("no")], horizontal=True, key="clock_shared") == t("yes")
+bank_col, police_col = st.columns(2)
+told_bank = bank_col.toggle(t("set_bank"), key="clock_bank")
+told_police = police_col.toggle(t("set_police"), key="clock_police")
+deadline_end = datetime.combine(clock_txn + timedelta(days=rights.REPORT_DAYS + 1), datetime.min.time(), IST)
+preview_clock = clock_txn > today
+# before the date arrives, run the clock as it will look on the day of the fraud
+seconds_left = (deadline_end - (datetime.combine(clock_txn, datetime.min.time(), IST) if preview_clock else now)).total_seconds()
+with clock_room:
+    clocks.show(rights.clock_state(clock_txn, int(clock_loss), clock_shared, told_bank, told_police, seconds_left, preview_clock), language)
 st.caption(t("disclaimer"))
-ui.section(t("services"))
-ui.services(language)
 ui.section(t("why"))
 ui.two_report_table()
 ui.section(t("proof"))
 ui.stats(live_status())
 ui.section(t("start"), "main")
 
-today = datetime.now(IST).date()
 case_tab, kit_tab, rejected_tab, shield_tab, rules_tab, judges_tab = st.tabs([t("tab_case"), t("tab_kit"), t("tab_rejected"), t("tab_shield"), t("tab_rules"), t("tab_judges")])
 
 with case_tab:

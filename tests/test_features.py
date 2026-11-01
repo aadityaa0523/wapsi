@@ -92,9 +92,13 @@ def test_every_message_exists_in_all_languages():
     assert all(TEXT[key].get(language) for key in TEXT for language in LANGUAGES)
 
 
-def test_example_case_comes_from_the_engine():
-    case = rights.example_case()
-    assert case["at_risk"] == 8500 and case["paid_now"] == 0 and case["deadline"] == date(2027, 1, 6)
+def test_clock_state_follows_the_rules():
+    day = date(2027, 3, 1)
+    shared = rights.clock_state(day, 10000, True, True, False, 1000, True)
+    assert shared["amount"] == 8500 and not shared["police_optional"] and not shared["over_limit"]
+    assert rights.clock_state(day, 10000, False, False, False, 1000, True)["police_optional"]
+    assert rights.clock_state(day, 10000, False, False, False, 1000, True)["amount"] == 10000
+    assert rights.clock_state(day, 50001, True, False, False, 1000, True)["over_limit"]
 
 
 def test_report_before_transaction_is_refused():

@@ -10,6 +10,8 @@ CSS = """
 :root { --primary: #1f2f7a; --primary-dark: #141f57; --accent: #0b6fb8; --saffron: #ff9933; --green: #0f6b06; --danger: #a4161a; --line: #d8deea; --ink: #111a33; --muted: #4a5468; --page: #f5f7fb; --tint: #eef1fb; }
 html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp textarea, .stApp button, .stApp li { font-family: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', sans-serif; }
 .stApp { background: var(--page); }
+iframe[title="streamlit.components.v1.html"], [data-testid="stIFrame"] { border-radius: 18px; }
+[data-testid="stCustomComponentV1"], .stElementContainer:has(iframe) { border-radius: 18px; overflow: hidden; }
 .stMain { overflow-x: clip; }
 .block-container { padding-top: 0 !important; max-width: 1080px; }
 header[data-testid="stHeader"] { background: transparent; height: 0; }
@@ -19,19 +21,9 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
 .wp-brand { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; padding: 10px 0 14px; }
 .wp-name { font-size: 1.9rem; font-weight: 700; color: var(--primary); line-height: 1.1; }
 .wp-name span { font-size: 1rem; font-weight: 600; color: var(--muted); margin-left: 8px; }
-.wp-tagline { color: var(--muted); font-size: .92rem; }
 a.wp-call { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border-radius: 8px; background: var(--danger); color: #fff !important; font-weight: 700; text-decoration: none; }
-.wp-hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: 28px; align-items: center; background: var(--primary); border-radius: 16px; padding: 36px 32px; margin: 12px 0 20px; }
-.wp-hero h1 { color: #fff !important; font-size: 2.3rem; line-height: 1.2; font-weight: 700; padding: 0 0 12px; margin: 0; font-family: inherit !important; }
 [data-testid="stHeaderActionElements"] { display: none; }
-.wp-hero p { color: #e6eafa; font-size: 1.05rem; line-height: 1.6; margin: 0 0 20px; }
-a.wp-cta { display: inline-flex; align-items: center; min-height: 48px; padding: 10px 22px; background: #fff; color: var(--primary) !important; font-weight: 700; text-decoration: none; border-radius: 8px; transition: background-color .2s; }
-a.wp-cta:hover { background: #ffe9cc; }
 *:focus-visible { outline: 3px solid var(--accent) !important; outline-offset: 2px; }
-.wp-hero a:focus-visible { outline-color: var(--saffron) !important; }
-.wp-case { background: #fff; border-radius: 12px; padding: 16px; color: var(--ink); }
-.wp-case-title { font-weight: 700; color: var(--primary); font-size: 1rem; margin-bottom: 10px; }
-.wp-tag { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 10px; background: #fff3e0; border: 1px solid var(--saffron); color: var(--ink); font-size: .76rem; font-weight: 700; }
 .wp-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-left-width: 5px; border-radius: 6px; margin-bottom: 8px; font-size: .92rem; background: #fff; color: var(--ink); animation: wp-in .4s ease-out both; }
 .wp-row b { font-weight: 600; }
 .wp-row em { font-style: normal; font-weight: 700; white-space: nowrap; }
@@ -39,15 +31,8 @@ a.wp-cta:hover { background: #ffe9cc; }
 .wp-row.bad { border-left-color: var(--danger); background: #fff5f5; } .wp-row.bad em { color: var(--danger); }
 .wp-row.info { border-left-color: var(--primary); } .wp-row.info em { color: var(--primary); }
 .wp-row:nth-child(2) { animation-delay: .25s; } .wp-row:nth-child(3) { animation-delay: .5s; } .wp-row:nth-child(4) { animation-delay: .75s; }
-.wp-verdict { padding: 10px 12px; background: var(--danger); color: #fff; border-radius: 6px; font-weight: 700; font-size: .95rem; animation: wp-in .4s ease-out .9s both; }
-.wp-human { margin-top: 10px; color: var(--muted); font-size: .86rem; font-weight: 600; }
 @keyframes wp-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .wp-section { color: var(--ink); font-size: 1.35rem; font-weight: 700; margin: 26px 0 12px; scroll-margin-top: 16px; }
-.wp-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-a.wp-card { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; text-decoration: none; transition: border-color .2s; }
-a.wp-card:hover { border-color: var(--primary); }
-.wp-card b { display: block; color: var(--primary); font-size: 1rem; margin-bottom: 4px; }
-.wp-card span { color: var(--muted); font-size: .9rem; line-height: 1.4; }
 .wp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .wp-stat { background: var(--tint); border-radius: 12px; padding: 14px 16px; }
 .wp-stat b { display: block; font-size: 1.6rem; color: var(--primary); }
@@ -73,8 +58,8 @@ a.wp-card:hover { border-color: var(--primary); }
 .stFormSubmitButton button p, .stDownloadButton button p, .stLinkButton a p { color: #fff !important; }
 [data-testid="stForm"] { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 20px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
-@media (max-width: 820px) { .wp-hero { grid-template-columns: 1fr; padding: 24px 18px; } .wp-hero h1 { font-size: 1.8rem; } .wp-cards { grid-template-columns: 1fr 1fr; } .wp-stats { grid-template-columns: 1fr; } }
-@media (max-width: 480px) { .wp-cards { grid-template-columns: 1fr; } .wp-name { font-size: 1.6rem; } .wp-table { font-size: .86rem; } }
+@media (max-width: 820px) { .wp-stats { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .wp-name { font-size: 1.6rem; } .wp-table { font-size: .86rem; } }
 </style>
 """
 SIZES = {"A−": "14px", "A": "16px", "A+": "19px"}
@@ -100,28 +85,9 @@ def brand(language):
     html(f"""<div class="wp-brand"><div><div class="wp-name">Wapsi <span>वापसी · వాపసీ</span></div><div class="wp-tagline">{TEXT['tagline'][language]}</div></div><a class="wp-call" href="tel:1930">{TEXT['helpline'][language]}: 1930</a></div>""")
 
 
-def hero(language):
-    case = rights.example_case()
-    t = lambda key: TEXT[key][language]
-    html(
-        f"""<section class="wp-hero"><div><h1>{t('hero_title')}</h1><p>{t('hero_sub')}</p><a class="wp-cta" href="#main">{t('hero_cta')}</a></div>
-<div class="wp-case"><div class="wp-case-title">{t('case_title')} <span class="wp-tag">{t('case_tag')}</span></div>
-<div><div class="wp-row ok"><b>{t('bank_report')}</b><em>{t('done')}</em></div>
-<div class="wp-row bad"><b>{t('police_report')}</b><em>{t('missing')}</em></div>
-<div class="wp-row info"><b>{t('deadline')}</b><em>{case['deadline']:%d %b %Y}</em></div></div>
-<div class="wp-verdict">Rs {case['at_risk']:,} {t('at_risk')}</div>
-<div class="wp-human">{t('human')}</div></div></section>"""
-    )
-
-
 def section(text, anchor=None):
     attr = f' id="{anchor}"' if anchor else ""
     html(f'<div class="wp-section"{attr}>{text}</div>')
-
-
-def services(language):
-    cards = "".join(f"""<a class="wp-card" href="#main"><b>{TEXT[f'svc{n}'][language]}</b><span>{TEXT[f'svc{n}d'][language]}</span></a>""" for n in range(1, 5))
-    html(f'<div class="wp-cards">{cards}</div>')
 
 
 def footer(language):

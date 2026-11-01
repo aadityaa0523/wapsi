@@ -170,8 +170,18 @@ def two_report_scenarios():
     return [(name, assess(txn, NEGLIGENCE, EXAMPLE_LOSS, as_of, bank_report=day(bank), police_report=day(police))["compensation"]) for name, bank, police in cases]
 
 
-def example_case():
-    """One labelled example run through the real engine: bank told, police not, two days in."""
-    txn = NEW_REGIME
-    result = assess(txn, NEGLIGENCE, EXAMPLE_LOSS, txn + timedelta(days=2), bank_report=txn)
-    return {"txn": txn, "deadline": result["deadlines"]["Report to bank AND police"], "at_risk": result["possible"], "paid_now": result["compensation"]}
+def clock_state(txn, loss, shared_credentials, bank_done, police_done, now_seconds_left, preview):
+    """What the two clocks show, worked out by the same rules engine as the full check."""
+    fault = NEGLIGENCE if shared_credentials else THIRD_PARTY
+    result = assess(txn, fault, loss, txn, bank_report=txn if bank_done else None, police_report=txn if police_done and shared_credentials else None)
+    stake = result.get("possible", 0) if shared_credentials else loss
+    return {
+        "remaining": now_seconds_left,
+        "total": (REPORT_DAYS + 1) * 86400,
+        "amount": stake,
+        "bank_done": bank_done,
+        "police_done": police_done,
+        "police_optional": not shared_credentials,
+        "over_limit": shared_credentials and "possible" not in result,
+        "preview": preview,
+    }

@@ -5,6 +5,13 @@ from streamlit.testing.v1 import AppTest
 from app import checks
 
 
+def named(widgets, label):
+    return next(widget for widget in widgets if widget.label == label)
+
+
+TXN, LOSS, TOLD_BANK = "Date of the transaction", "Amount lost (Rs)", "Date you told the bank, if done"
+
+
 def run_app(monkeypatch):
     async def fake_checks():
         return {"generated_at": "now", "sources": [], "database": {}}
@@ -29,8 +36,8 @@ def test_ongoing_scam_tells_victim_to_hang_up(monkeypatch):
 
 def test_form_shows_rights(monkeypatch):
     app = run_app(monkeypatch)
-    app.date_input[0].set_value(date(2026, 10, 30))
-    app.number_input[0].set_value(5000)
+    named(app.date_input, TXN).set_value(date(2026, 10, 30))
+    named(app.number_input, LOSS).set_value(5000)
     app.selectbox[1].set_value("I shared an OTP, PIN or password, or installed a bad app")
     app.button[0].click().run()
     assert not app.exception
@@ -40,10 +47,10 @@ def test_form_shows_rights(monkeypatch):
 def test_preview_reaches_2027_rules_and_is_labelled(monkeypatch):
     app = run_app(monkeypatch)
     app.checkbox[0].check().run()
-    app.date_input[0].set_value(date(2027, 3, 1))
-    app.number_input[0].set_value(10000)
+    named(app.date_input, TXN).set_value(date(2027, 3, 1))
+    named(app.number_input, LOSS).set_value(10000)
     app.selectbox[1].set_value("I shared an OTP, PIN or password, or installed a bad app")
-    app.date_input[2].set_value(date(2027, 3, 1))
+    named(app.date_input, TOLD_BANK).set_value(date(2027, 3, 1))
     app.button[0].click().run()
     assert not app.exception
     assert any("Preview with example dates" in warning.value for warning in app.warning)
@@ -53,8 +60,8 @@ def test_preview_reaches_2027_rules_and_is_labelled(monkeypatch):
 def test_preview_starts_on_the_new_rules(monkeypatch):
     app = run_app(monkeypatch)
     app.checkbox[0].check().run()
-    assert app.date_input[0].value == date(2027, 1, 1)
-    app.number_input[0].set_value(10000)
+    assert named(app.date_input, TXN).value == date(2027, 1, 1)
+    named(app.number_input, LOSS).set_value(10000)
     app.button[0].click().run()
     assert not app.exception
     assert any(header.value == "RBI directions effective 1 Jan 2027" for header in app.subheader)
@@ -65,16 +72,16 @@ def test_language_switch_translates_form_and_keeps_working(monkeypatch):
     app.radio[0].set_value("हिन्दी").run()
     assert not app.exception
     assert app.text_area[0].label == "क्या हुआ? (वैकल्पिक)"
-    app.number_input[0].set_value(5000)
+    named(app.number_input, "गई हुई राशि (रुपये)").set_value(5000)
     app.button[0].click().run()
     assert not app.exception
 
 
 def test_impossible_dates_get_a_clear_message(monkeypatch):
     app = run_app(monkeypatch)
-    app.date_input[0].set_value(date(2026, 10, 30))
-    app.number_input[0].set_value(5000)
-    app.date_input[2].set_value(date(2026, 10, 1))
+    named(app.date_input, TXN).set_value(date(2026, 10, 30))
+    named(app.number_input, LOSS).set_value(5000)
+    named(app.date_input, TOLD_BANK).set_value(date(2026, 10, 1))
     app.button[0].click().run()
     assert not app.exception
     assert any("cannot be before" in warning.value for warning in app.warning)
@@ -99,3 +106,12 @@ def test_several_transactions_show_the_safe_date(monkeypatch):
     assert not app.exception
     assert any("by 06 Mar 2027" in warning.value for warning in app.warning)
     assert any("above the Rs 50,000" in warning.value for warning in app.warning)
+
+
+def test_clocks_render_and_react_to_reports(monkeypatch):
+    app = run_app(monkeypatch)
+    assert not app.exception
+    app.toggle[0].set_value(True).run()
+    assert not app.exception
+    named(app.radio, "Did you share an OTP, PIN or password?").set_value("No").run()
+    assert not app.exception
