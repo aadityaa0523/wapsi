@@ -60,6 +60,16 @@ a.wp-call { display: inline-flex; align-items: center; min-height: 44px; padding
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 @media (max-width: 820px) { .wp-stats { grid-template-columns: 1fr; } }
 @media (max-width: 480px) { .wp-name { font-size: 1.6rem; } .wp-table { font-size: .86rem; } }
+.st-key-wizard { background: #fff; border: 1px solid var(--line); border-top: 5px solid var(--primary); border-radius: 4px; padding: 24px clamp(14px, 3vw, 32px) !important; margin-top: 10px; }
+.wp-q { color: var(--ink) !important; font-size: clamp(1.4rem, 3.4vw, 2rem) !important; line-height: 1.25 !important; font-weight: 700 !important; padding: 8px 0 12px !important; font-family: inherit !important; }
+.st-key-wizard button { min-height: 64px !important; border-radius: 6px !important; }
+.st-key-wizard button p { font-size: 1.1rem !important; font-weight: 700 !important; }
+.st-key-wizard input { font-size: 1.5rem !important; min-height: 56px; }
+.wp-progress { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .9rem; }
+.wp-progress i { width: 34px; height: 6px; border-radius: 3px; background: var(--line); }
+.wp-progress i.on { background: var(--saffron); }
+.wp-progress span { margin-left: 6px; }
+a.wp-big { display: flex; align-items: center; justify-content: center; min-height: 64px; margin: 10px 0; padding: 12px; background: var(--danger); color: #fff !important; font-size: 1.25rem; font-weight: 700; border-radius: 6px; text-decoration: none; }
 .wp-bar { border-bottom: none; }
 .wp-flagline { height: 5px; background: linear-gradient(90deg, var(--saffron) 0 33.3%, #fff 33.3% 66.6%, #138808 66.6%); }
 .wp-brand { border-bottom: 1px solid var(--line); }
@@ -109,7 +119,7 @@ def brand(language):
     t = lambda key: TEXT[key][language]
     html(
         f"""<div class="wp-brand"><div class="wp-id"><div class="wp-mark" aria-hidden="true">W</div><div><div class="wp-hi">वापसी · వాపసీ</div><div class="wp-name">Wapsi</div><div class="wp-tagline">{t('tagline')}</div></div></div><a class="wp-call" href="tel:1930">{t('helpline')}: 1930</a></div>
-<nav class="wp-nav wp-bleed" aria-label="Main"><a href="#top">{t('nav_home')}</a><a href="#main">{t('nav_help')}</a><a href="#why">{t('nav_why')}</a><a href="#proof">{t('nav_proof')}</a><a href="https://cybercrime.gov.in/" target="_blank" rel="noopener">{t('nav_ncrp')}</a><a href="https://cms.rbi.org.in/" target="_blank" rel="noopener">{t('nav_rbi')}</a></nav>
+<nav class="wp-nav wp-bleed" aria-label="Main"><a href="#top">{t('nav_home')}</a><a href="#main">{t('more_help')}</a><a href="https://cybercrime.gov.in/" target="_blank" rel="noopener">{t('nav_ncrp')}</a><a href="https://cms.rbi.org.in/" target="_blank" rel="noopener">{t('nav_rbi')}</a></nav>
 <div class="wp-notice wp-bleed" id="top"><b>{t('notice_label')}</b><span>{t('notice')}</span></div>"""
     )
 

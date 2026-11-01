@@ -148,3 +148,21 @@ def test_calendar_file_has_date_and_alarm():
     ics = extras.calendar_file({"Report to bank, and police": date(2027, 1, 6)})
     assert "DTSTART;VALUE=DATE:20270106" in ics and "DTEND;VALUE=DATE:20270107" in ics
     assert "TRIGGER:-P1D" in ics and "bank\\, and" in ics and ics.endswith("END:VCALENDAR\r\n")
+
+
+def test_guided_flow_previews_new_rules_before_2027():
+    from app import wizard
+
+    assert wizard.clock_inputs(2, date(2026, 11, 1)) == (date(2027, 1, 1), date(2027, 1, 3), True)
+    assert wizard.clock_inputs(2, date(2027, 2, 10)) == (date(2027, 2, 8), date(2027, 2, 10), False)
+
+
+def test_next_action_is_a_single_clear_step():
+    from app import wizard
+
+    assert wizard.next_action(True, False, False) == "next_call"
+    assert wizard.next_action(True, True, False) == "next_call"
+    assert wizard.next_action(True, False, True) == "next_bank"
+    assert wizard.next_action(True, True, True) == "next_done"
+    assert wizard.next_action(False, False, False) == "next_bank"
+    assert wizard.next_action(False, True, False) == "next_call"

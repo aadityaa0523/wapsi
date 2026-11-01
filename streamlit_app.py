@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 import streamlit as st
 
-from app import agent, checks, clocks, decoder, extras, portal, rights, ui
+from app import agent, checks, decoder, extras, portal, rights, ui, wizard
 from app.i18n import LANGUAGES, TEXT
 from app.labels import FAULT_TEXT
 from app.safety import SecretBlocked, append_event, chain_is_valid, proof_pack, sanitize, triage
@@ -58,31 +58,12 @@ language_col, size_col = st.columns([3, 1])
 language = language_col.radio("Language", LANGUAGES, horizontal=True, label_visibility="collapsed", key="language")
 ui.text_size(size_col.segmented_control("Text size", list(ui.SIZES), default="A", label_visibility="collapsed"))
 ui.brand(language)
-st.error(t("emergency"))
 
 today = datetime.now(IST).date()
 now = datetime.now(IST)
-first_rule_day = max(today, rights.NEW_REGIME)
-clock_room = st.container()
-when_col, amount_col, kind_col = st.columns(3)
-clock_txn = when_col.date_input(t("set_when"), value=first_rule_day, min_value=rights.NEW_REGIME, max_value=date(2028, 12, 31), key="clock_when")
-clock_loss = amount_col.number_input(t("set_amount"), min_value=1, value=10000, step=500, key="clock_amount")
-clock_shared = kind_col.radio(t("set_kind"), [t("yes"), t("no")], horizontal=True, key="clock_shared") == t("yes")
-bank_col, police_col = st.columns(2)
-told_bank = bank_col.toggle(t("set_bank"), key="clock_bank")
-told_police = police_col.toggle(t("set_police"), key="clock_police")
-deadline_end = datetime.combine(clock_txn + timedelta(days=rights.REPORT_DAYS + 1), datetime.min.time(), IST)
-preview_clock = clock_txn > today
-# before the date arrives, run the clock as it will look on the day of the fraud
-seconds_left = (deadline_end - (datetime.combine(clock_txn, datetime.min.time(), IST) if preview_clock else now)).total_seconds()
-with clock_room:
-    clocks.show(rights.clock_state(clock_txn, int(clock_loss), clock_shared, told_bank, told_police, seconds_left, preview_clock), language)
+wizard.run(language, now)
 st.caption(t("disclaimer"))
-ui.section(t("why"), "why")
-ui.two_report_table()
-ui.section(t("proof"), "proof")
-ui.stats(live_status())
-ui.section(t("start"), "main")
+ui.section(t("more_help"), "main")
 
 case_tab, kit_tab, rejected_tab, shield_tab, rules_tab, judges_tab = st.tabs([t("tab_case"), t("tab_kit"), t("tab_rejected"), t("tab_shield"), t("tab_rules"), t("tab_judges")])
 
@@ -309,6 +290,10 @@ with shield_tab:
 
 with rules_tab:
     status = live_status()
+    ui.section(t("why"), "why")
+    ui.two_report_table()
+    ui.section(t("proof"), "proof")
+    ui.stats(status)
     st.caption(f"Sources checked at {status['generated_at']} UTC, refreshed every 5 minutes.")
     st.dataframe(
         [{"Source": s["name"], "Reachable": s["reachable"], "Rule clause found": str(s.get("clause_verified", "n/a")), "SHA-256": s.get("sha256", s.get("error", ""))} for s in status["sources"]],
@@ -329,8 +314,8 @@ with judges_tab:
     st.write("A three-minute walk through the live app. No login needed.")
     for number, step in enumerate(
         [
-            "Look at the table above. Change nothing, and note that one missing report takes the compensation to zero.",
-            "In My deadline, tick Preview, enter any loss, choose the shared OTP option, and click Check my rights. Both clocks and warnings appear. Add one report date and run it again.",
+            "Answer the four questions at the top. Then switch on I told my bank and watch the message change: one report is not enough.",
+            "In Live rules, see how one missing report takes compensation to zero. In My deadline, tick Preview, enter any loss, choose the shared OTP option, and click Check my rights. Both clocks and warnings appear. Add one report date and run it again.",
             "In What happened, type: my otp is 482913. It is blocked and never logged.",
             "Replace it with: I am under digital arrest. The app tells the victim to hang up, in three languages.",
             "In Bank said no, paste: You shared your OTP so this is customer negligence. It cites the rule and writes the letter.",

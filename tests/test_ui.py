@@ -10,6 +10,7 @@ def named(widgets, label):
 
 
 TXN, LOSS, TOLD_BANK = "Date of the transaction", "Amount lost (Rs)", "Date you told the bank, if done"
+FORM_BUTTON = "Check my rights"
 
 
 def run_app(monkeypatch):
@@ -39,7 +40,7 @@ def test_form_shows_rights(monkeypatch):
     named(app.date_input, TXN).set_value(date(2026, 10, 30))
     named(app.number_input, LOSS).set_value(5000)
     app.selectbox[1].set_value("I shared an OTP, PIN or password, or installed a bad app")
-    app.button[0].click().run()
+    named(app.button, FORM_BUTTON).click().run()
     assert not app.exception
     assert any("until you report" in info.value for info in app.info)
 
@@ -51,7 +52,7 @@ def test_preview_reaches_2027_rules_and_is_labelled(monkeypatch):
     named(app.number_input, LOSS).set_value(10000)
     app.selectbox[1].set_value("I shared an OTP, PIN or password, or installed a bad app")
     named(app.date_input, TOLD_BANK).set_value(date(2027, 3, 1))
-    app.button[0].click().run()
+    named(app.button, FORM_BUTTON).click().run()
     assert not app.exception
     assert any("Preview with example dates" in warning.value for warning in app.warning)
     assert any("No police" in warning.value for warning in app.warning)
@@ -62,7 +63,7 @@ def test_preview_starts_on_the_new_rules(monkeypatch):
     app.checkbox[0].check().run()
     assert named(app.date_input, TXN).value == date(2027, 1, 1)
     named(app.number_input, LOSS).set_value(10000)
-    app.button[0].click().run()
+    named(app.button, FORM_BUTTON).click().run()
     assert not app.exception
     assert any(header.value == "RBI directions effective 1 Jan 2027" for header in app.subheader)
 
@@ -73,7 +74,7 @@ def test_language_switch_translates_form_and_keeps_working(monkeypatch):
     assert not app.exception
     assert app.text_area[0].label == "क्या हुआ? (वैकल्पिक)"
     named(app.number_input, "गई हुई राशि (रुपये)").set_value(5000)
-    app.button[0].click().run()
+    named(app.button, "मेरे अधिकार देखें").click().run()
     assert not app.exception
 
 
@@ -82,7 +83,7 @@ def test_impossible_dates_get_a_clear_message(monkeypatch):
     named(app.date_input, TXN).set_value(date(2026, 10, 30))
     named(app.number_input, LOSS).set_value(5000)
     named(app.date_input, TOLD_BANK).set_value(date(2026, 10, 1))
-    app.button[0].click().run()
+    named(app.button, FORM_BUTTON).click().run()
     assert not app.exception
     assert any("cannot be before" in warning.value for warning in app.warning)
 
@@ -108,10 +109,45 @@ def test_several_transactions_show_the_safe_date(monkeypatch):
     assert any("above the Rs 50,000" in warning.value for warning in app.warning)
 
 
-def test_clocks_render_and_react_to_reports(monkeypatch):
-    app = run_app(monkeypatch)
+def through_questions(app, shared="Yes"):
+    named(app.button, "No, it already happened").click().run()
+    named(app.button, "Today").click().run()
+    named(app.number_input, "How much did you lose? (Rs)").set_value(10000)
+    named(app.button, "Continue").click().run()
+    named(app.button, shared).click().run()
+    return app
+
+
+def test_guided_questions_reach_the_clocks_and_react(monkeypatch):
+    app = through_questions(run_app(monkeypatch))
     assert not app.exception
+    assert app.session_state["wizard"]["amount"] == 10000
     app.toggle[0].set_value(True).run()
     assert not app.exception
-    named(app.radio, "Did you share an OTP, PIN or password?").set_value("No").run()
-    assert not app.exception
+
+
+def test_on_a_call_goes_to_hang_up_first(monkeypatch):
+    app = run_app(monkeypatch)
+    named(app.button, "Yes, right now").click().run()
+    assert any("Hang up" in error.value for error in app.error)
+    named(app.button, "I have hung up").click().run()
+    assert any("When did the money" in block.value for block in app.markdown)
+
+
+def test_back_and_start_again(monkeypatch):
+    app = run_app(monkeypatch)
+    named(app.button, "No, it already happened").click().run()
+    named(app.button, "Back").click().run()
+    assert app.session_state["wizard"]["step"] == 0
+    through_questions(app)
+    named(app.button, "Start again").click().run()
+    assert app.session_state["wizard"]["step"] == 0
+
+
+def test_earlier_asks_how_many_days(monkeypatch):
+    app = run_app(monkeypatch)
+    named(app.button, "No, it already happened").click().run()
+    named(app.button, "Earlier").click().run()
+    named(app.number_input, "How many days ago?").set_value(9).run()
+    named(app.button, "Continue").click().run()
+    assert not app.exception and app.session_state["wizard"]["days_ago"] == 9
