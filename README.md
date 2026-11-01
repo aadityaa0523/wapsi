@@ -6,7 +6,7 @@ app_port: 7860
 
 # Wapsi
 
-Cyber-fraud recovery agent for Forge '26, Theme 1, Problem 3. Work in progress: the Portal Agent and hosted database are not built yet.
+Cyber-fraud recovery agent for Forge '26, Theme 1, Problem 3. Work in progress: a hosted database is not built yet, and the app stops at the police portal's login (see below).
 
 ```mermaid
 flowchart TD
@@ -34,7 +34,37 @@ To turn the agent on, set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` as secre
 - `app/checks.py`: checks official sources live and confirms each quoted rule clause is still on its source page. Results are cached for 5 minutes.
 - `streamlit_app.py`: the web app. `app/main.py` serves the same checks as a FastAPI endpoint, for Docker hosts.
 
+- `app/portal.py`: prepares a filing kit from the police portal's published notice, including its 200-character minimum and banned characters.
+- `app/i18n.py`: safety-critical messages in Hindi and Telugu. The rest of the app is in English.
+
 Not legal advice. Not reviewed by any bank, regulator or lawyer.
+
+## Where the agent stops
+
+The portal asks the complainant to accept a legal declaration, then log in with a mobile OTP and captcha. Wapsi does none of these and never submits. It does not automate the portal: the form sits behind login, so the kit is built from the portal's notice and has not been checked against the form itself.
+
+## Hard-case results
+
+`tests/test_hard_cases.py`, run with no LLM. 15 of 16 pass. All LLM replies in the tests are simulated.
+
+| # | Case | Result |
+|---|---|---|
+| 1 | Fraud minutes ago | Pass |
+| 2 | Still on a digital arrest call | Pass |
+| 3 | Shared OTP, before 2027 | Pass |
+| 4 | Shared OTP, from 2027 | Pass |
+| 5 | Reported to bank only | Pass |
+| 6 | Reported to police only | Pass |
+| 7 | Reported on day 6 | Pass |
+| 8 | Loss of exactly Rs 50,000 and Rs 50,001 | Pass |
+| 9 | Compensation already used | Pass |
+| 10 | Approved payment, investment scam | Pass |
+| 11 | Multiple transactions and banks | **Fail: not handled** |
+| 12 | Credit card | Pass |
+| 13 | Text says to ignore the rules and promise a refund | Pass |
+| 14 | Pasted OTP, in English, Hindi and Telugu | Pass |
+| 15 | Message suggesting self-harm, in three languages | Pass |
+| 16 | LLM down and portal down | Pass |
 
 ## Run locally
 

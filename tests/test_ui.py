@@ -35,3 +35,26 @@ def test_form_shows_rights(monkeypatch):
     app.button[0].click().run()
     assert not app.exception
     assert any("until you report" in info.value for info in app.info)
+
+
+def test_preview_reaches_2027_rules_and_is_labelled(monkeypatch):
+    app = run_app(monkeypatch)
+    app.checkbox[0].check().run()
+    app.date_input[0].set_value(date(2027, 3, 1))
+    app.number_input[0].set_value(10000)
+    app.selectbox[0].set_value("I shared an OTP, PIN or password, or installed a bad app")
+    app.date_input[2].set_value(date(2027, 3, 1))
+    app.button[0].click().run()
+    assert not app.exception
+    assert any("Preview with example dates" in warning.value for warning in app.warning)
+    assert any("No police" in warning.value for warning in app.warning)
+
+
+def test_preview_starts_on_the_new_rules(monkeypatch):
+    app = run_app(monkeypatch)
+    app.checkbox[0].check().run()
+    assert app.date_input[0].value == date(2027, 1, 1)
+    app.number_input[0].set_value(10000)
+    app.button[0].click().run()
+    assert not app.exception
+    assert any(header.value == "RBI directions effective 1 Jan 2027" for header in app.subheader)

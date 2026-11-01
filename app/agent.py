@@ -4,6 +4,7 @@ import re
 
 import httpx
 
+from app.portal import MIN_DETAILS, clean_details
 from app.rights import AUTHORISED, BANK_FAULT, COERCED, NEGLIGENCE, THIRD_PARTY
 
 FAULTS = {THIRD_PARTY, NEGLIGENCE, BANK_FAULT, AUTHORISED, COERCED, "unclear"}
@@ -73,7 +74,7 @@ def draft_reports(story, facts, transport=None):
     """facts holds the values computed in plain code. Drafts that fail the fact check are never returned."""
     facts_text = json.dumps(facts, default=str)
     prompt = (
-        'Return {"bank_letter": text, "police_complaint": text}. Plain, factual, first person. Use only these facts and the story. '
+        f'Return {{"bank_letter": text, "police_complaint": text}}. Plain, factual, first person, in English. The police complaint must be at least {MIN_DETAILS} characters. Use only these facts and the story. '
         f"Where a detail is missing write ____ for the victim to fill in. Do not add any other number or date.\nFacts: {facts_text}\n<story>{story}</story>"
     )
     result = ask_llm(prompt, transport)
@@ -82,4 +83,4 @@ def draft_reports(story, facts, transport=None):
     problems = fact_check(result["bank_letter"] + "\n" + result["police_complaint"], facts_text + " " + story)
     if problems:
         raise AgentError("Draft failed the fact check: " + "; ".join(problems))
-    return {"bank_letter": result["bank_letter"], "police_complaint": result["police_complaint"]}
+    return {"bank_letter": result["bank_letter"], "police_complaint": clean_details(result["police_complaint"])}

@@ -4,14 +4,16 @@ import re
 
 SECRET_WORD = r"(otp|cvv|upi\s*pin|atm\s*pin|mpin|pin|password|passcode)"
 SECRET = re.compile(rf"\b{SECRET_WORD}\b\W{{0,5}}(is\W{{0,3}})?\w*\d|\b\d{{3,8}}\b\W{{0,3}}(is\W{{0,3}})?(my\W{{0,3}})?{SECRET_WORD}\b", re.I)
+# \b is unreliable with Indian-script vowel signs, so these match on the word itself
+SECRET_INDIC = re.compile(r"(ओटीपी|पिन|पासवर्ड|ఓటీపీ|పిన్|పాస్‌?వర్డ్)\D{0,15}\d{3,8}|\d{3,8}\D{0,15}(ओटीपी|पिन|पासवर्ड|ఓటీపీ|పిన్|పాస్‌?వర్డ్)")
 MASKS = [
     (re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b", re.I), "[PAN]"),
     (re.compile(r"\b\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{1,7}\b"), "[CARD]"),
     (re.compile(r"\b\d{4}[ -]?\d{4}[ -]?\d{4}\b"), "[AADHAAR]"),
     (re.compile(r"\b\d{9,18}\b"), "[ACCOUNT]"),
 ]
-ONGOING = re.compile(r"digital arrest|still on (the )?(call|video)|(on|in) (a |the )?(video )?call (with|from)|told (me )?(to|not to) (pay|transfer|disconnect|tell)|keep(ing)? me on", re.I)
-CRISIS = re.compile(r"kill myself|suicid|end my life|don'?t want to live|self[- ]harm", re.I)
+ONGOING = re.compile(r"digital arrest|डिजिटल अरेस्ट|డిజిటల్ అరెస్ట్|still on (the )?(call|video)|(on|in) (a |the )?(video )?call (with|from)|told (me )?(to|not to) (pay|transfer|disconnect|tell)|keep(ing)? me on", re.I)
+CRISIS = re.compile(r"kill myself|आत्महत्या|ఆత్మహత్య|suicid|end my life|don'?t want to live|self[- ]harm", re.I)
 
 
 class SecretBlocked(ValueError):
@@ -20,7 +22,7 @@ class SecretBlocked(ValueError):
 
 def sanitize(text):
     """Run before storing text or sending it anywhere. A bare number with no label can still get through."""
-    if SECRET.search(text):
+    if SECRET.search(text) or SECRET_INDIC.search(text):
         raise SecretBlocked("Never share OTPs, PINs or passwords with anyone, including Wapsi. Your text was not saved.")
     for pattern, label in MASKS:
         text = pattern.sub(label, text)

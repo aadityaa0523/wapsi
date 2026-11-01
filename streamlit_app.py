@@ -1,10 +1,11 @@
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import httpx
 import streamlit as st
 
-from app import agent, checks, decoder, rights
+from app import agent, checks, decoder, portal, rights
+from app.i18n import LANGUAGES, TEXT
 from app.safety import SecretBlocked, append_event, chain_is_valid, proof_pack, sanitize, triage
 
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -49,12 +50,13 @@ def agent_call_allowed():
 
 st.set_page_config(page_title="Wapsi")
 st.title("Wapsi")
-st.write("**From 1 January 2027, reporting cyber fraud to only one place can cost you your compensation.** Wapsi tracks the bank route and the police route together, by the rules for your date, and keeps a record of each step.")
-st.error("**Fraud in the last few hours? Call 1930 now and tell your bank.** Do this before anything else here.")
-st.caption("Not legal advice. Wapsi cannot promise that you will get money back. Never share an OTP, PIN or password with anyone, including Wapsi.")
+language = st.radio("Language", LANGUAGES, horizontal=True, label_visibility="collapsed")
+st.write(TEXT["pitch"][language])
+st.error(TEXT["emergency"][language])
+st.caption(TEXT["disclaimer"][language])
 
 today = datetime.now(IST).date()
-case_tab, rejected_tab, rules_tab = st.tabs(["My case", "Bank rejected me", "Live rules"])
+case_tab, kit_tab, rejected_tab, rules_tab = st.tabs(["My case", "Filing kit", "Bank rejected me", "Live rules"])
 
 with case_tab:
     story = st.text_area("What happened? (optional)", max_chars=4000)
@@ -70,9 +72,9 @@ with case_tab:
             log_event("Blocked text containing a secret")
 
     if level == "crisis":
-        st.error("You matter, and money can be dealt with later. Please call Tele-MANAS on 14416 now, at any hour.")
+        st.error(TEXT["crisis"][language])
     if level == "ongoing":
-        st.error("**Hang up now.** Police never arrest anyone over a video call, and no real officer asks you to pay. Do not send more money. Then call 1930.")
+        st.error(TEXT["hang_up"][language])
 
     if not agent.configured():
         st.info("The AI agent is off because no LLM key is set. The rules below still work.")
@@ -116,43 +118,49 @@ with case_tab:
         except (httpx.HTTPError, KeyError):
             st.warning("The IFSC lookup is unavailable right now. You can continue without it.")
 
+    preview = st.checkbox("Preview the rules from 1 January 2027, using future dates")
+    latest = date(2028, 12, 31) if preview else today
     with st.form("case"):
-        txn = st.date_input("Date of the transaction", value=today, max_value=today)
+        txn = st.date_input("Date of the transaction", value=rights.NEW_REGIME if preview else today, min_value=rights.NEW_REGIME if preview else date(2017, 7, 6), max_value=latest, key=f"txn_{preview}")
         loss = st.number_input("Amount lost (Rs)", min_value=1, value=None, step=1)
         recovered = st.number_input("Amount already recovered (Rs)", min_value=0, value=0, step=1)
         fault = st.selectbox("What best describes it?", FAULTS, index=suggested)
         account = st.selectbox("Account type", rights.LIABILITY_CAPS)
-        alert = st.date_input("Date the bank's message reached you, if any", value=None, max_value=today)
-        bank_report = st.date_input("Date you reported to the bank, if done", value=None, max_value=today)
-        police_report = st.date_input("Date you reported to 1930 or cybercrime.gov.in, if done", value=None, max_value=today)
+        alert = st.date_input("Date the bank's message reached you, if any", value=None, max_value=latest)
+        bank_report = st.date_input("Date you reported to the bank, if done", value=None, max_value=latest)
+        police_report = st.date_input("Date you reported to 1930 or cybercrime.gov.in, if done", value=None, max_value=latest)
         used_before = st.checkbox("I have received this RBI compensation before")
         submitted = st.form_submit_button("Check my rights")
 
     if submitted:
+        # the 2027 rules cannot be reached with real dates yet, so preview counts from the dates entered
+        as_of = max(today, txn, alert or txn, bank_report or txn, police_report or txn) if preview else today
         if loss is None or recovered > loss:
             st.warning("Enter the amount lost, and a recovered amount no bigger than that.")
         else:
-            result = rights.assess(txn, FAULTS[fault], int(loss), today, rights.LIABILITY_CAPS[account], alert, bank_report, police_report, used_before, int(recovered))
+            result = rights.assess(txn, FAULTS[fault], int(loss), as_of, rights.LIABILITY_CAPS[account], alert, bank_report, police_report, used_before, int(recovered))
             log_event(f"Rights checked under: {result['regime']}")
             st.subheader(result["regime"])
+            if preview:
+                st.warning("Preview with example dates, not a real case. These rules start on 1 January 2027.")
             st.info(result["summary"])
             for warning in result["warnings"]:
                 st.warning(warning)
             for name, deadline in result["deadlines"].items():
-                st.metric(name, f"{deadline:%d %b %Y}", f"{(deadline - today).days} days left")
+                st.metric(name, f"{deadline:%d %b %Y}", f"{(deadline - as_of).days} days left")
             if result["source"]:
                 st.caption(f"Source: {result['source']} (checked against: {result['verified_from']}). Working-day dates are estimates because bank holidays vary by state.")
             if txn < rights.NEW_REGIME:
                 st.caption("Rules change for transactions from 1 Jan 2027.")
 
             st.subheader("What to do next")
-            for number, step in enumerate(rights.next_steps(txn, today, bank_report, police_report), 1):
+            for number, step in enumerate(rights.next_steps(txn, as_of, bank_report, police_report), 1):
                 st.write(f"{number}. {step}")
             st.link_button("Report on cybercrime.gov.in", "https://cybercrime.gov.in/")
 
             facts = {
                 "transaction_date": txn, "loss_rupees": int(loss), "recovered_rupees": int(recovered), "bank": bank["bank"] if bank else None, "ifsc": bank["ifsc"] if bank else None,
-                "bank_alert": alert, "bank_report": bank_report, "police_report": police_report, "today": today,
+                "bank_alert": alert, "bank_report": bank_report, "police_report": police_report, "checked_as_of": as_of,
             }
             if agent.configured() and clean and level == "normal":
                 try:
@@ -160,6 +168,7 @@ with case_tab:
                         raise agent.AgentError("LimitReached")
                     drafts = agent.draft_reports(clean, facts)
                     log_event("Agent drafts passed the fact check")
+                    st.session_state["police_draft"] = drafts["police_complaint"]
                     st.subheader("Drafts for you to check and send yourself")
                     st.text_area("Letter to your bank", drafts["bank_letter"], height=220)
                     st.text_area("Police complaint text", drafts["police_complaint"], height=220)
@@ -168,6 +177,31 @@ with case_tab:
                     st.warning(f"No draft shown, because none could be verified. {error if 'fact check' in str(error) else ''}")
 
             st.download_button("Download my Proof Pack", proof_pack(facts, result, st.session_state["audit"]), "wapsi-proof-pack.txt", on_click="ignore")
+
+with kit_tab:
+    st.write("Everything the police portal's notice asks for, ready to copy. You accept its declaration, log in and submit yourself. Wapsi never files for you.")
+    details = st.text_area("Incident details", value=st.session_state.get("police_draft") or clean or "", max_chars=4000, height=200)
+    kit_bank = st.text_input("Bank, wallet or merchant", value=bank["bank"] if bank else "")
+    utr = st.text_input("Transaction ID or UTR")
+    kit_date = st.date_input("Incident date", value=today, max_value=today, key="kit_date")
+    kit_time = st.time_input("Incident time", value=None)
+    amount = st.number_input("Fraud amount (Rs)", min_value=0, value=0, step=1)
+    try:
+        cleaned = portal.clean_details(sanitize(details))
+    except SecretBlocked as blocked:
+        st.warning(str(blocked))
+    else:
+        if cleaned != details.strip():
+            st.caption("Characters the portal does not allow were removed, and any card or account numbers were masked.")
+        missing = portal.missing_items(cleaned, kit_bank, utr, amount)
+        for item in missing:
+            st.warning(item)
+        if not missing:
+            st.success("Ready, based on the portal's published notice. The form itself sits behind login, so it may ask for more.")
+        kit = portal.kit_text(cleaned, kit_bank, utr, kit_date, kit_time or "____", amount)
+        st.text_area("Your filing kit", kit, height=300)
+        st.download_button("Download my filing kit", kit, "wapsi-filing-kit.txt", on_click="ignore")
+        st.link_button("Open cybercrime.gov.in", portal.PORTAL_URL)
 
 with rejected_tab:
     st.write("Paste the bank's reply. Wapsi checks it against the RBI rules for your transaction date.")
