@@ -21,6 +21,17 @@ class AgentError(Exception):
     pass
 
 
+def load_env_file(path=os.path.join(os.path.dirname(__file__), "..", ".env")):
+    """Local runs only. Hosted secrets are already in the environment and take priority."""
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8-sig") as env:
+        for line in env:
+            name, separator, value = line.strip().partition("=")
+            if separator and not name.startswith("#"):
+                os.environ.setdefault(name.strip(), value.strip().strip("\"'"))
+
+
 def configured():
     return all(os.environ.get(name) for name in ("LLM_BASE_URL", "LLM_MODEL", "LLM_API_KEY"))
 

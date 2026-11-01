@@ -4,11 +4,12 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 import streamlit as st
 
-from app import agent, checks, decoder, extras, portal, rights, ui, wizard
+from app import agent, checks, decoder, extras, orchestrator, portal, rights, ui, wizard
 from app.i18n import LANGUAGES, TEXT
 from app.labels import FAULT_TEXT
 from app.safety import SecretBlocked, append_event, chain_is_valid, proof_pack, sanitize, triage
 
+agent.load_env_file()
 IST = timezone(timedelta(hours=5, minutes=30))
 # shortcut: limit is per browser session, so a new session resets it; upgrade with a hosted rate limiter
 MAX_AGENT_CALLS = 10
@@ -18,6 +19,16 @@ FAULTS = {
     "I paid because I was threatened or forced, such as digital arrest": rights.COERCED,
     "The bank made a mistake": rights.BANK_FAULT,
     "I approved the payment myself, such as an investment scam": rights.AUTHORISED,
+}
+
+
+AGENT_STEPS = {
+    "check_scam": "Checked for recovery-scam signs",
+    "look_up_bank": "Looked up your bank",
+    "check_rules": "Checked RBI's wording live",
+    "work_out_rights": "Worked out your rights with the rules engine",
+    "ask_person": "Needs your answer",
+    "finish": "Summary",
 }
 
 
@@ -90,20 +101,33 @@ with case_tab:
     else:
         st.checkbox(t("consent"), key="consent")
     agent_allowed = agent.configured() and clean and level == "normal" and st.session_state.get("consent")
-    if agent_allowed and st.button("Let the agent read my story"):
-        with st.status("Agent working") as steps:
+    if agent_allowed and st.button("Let the agent work on my story", type="primary"):
+        guided_answers = st.session_state.get("wizard", {})
+        days_ago = guided_answers.get("days_ago", 0)
+        txn_day, as_of_day, _ = wizard.clock_inputs(days_ago, today)
+        agent_facts = {"txn": txn_day, "today": as_of_day, "amount": guided_answers.get("amount")}
+        with st.status("Agent working", expanded=True) as steps:
             st.write("Checked your text for secrets and masked your identifiers.")
+
+            def show_step(step):
+                label = AGENT_STEPS.get(step["tool"], "Tried a step that is not allowed, and moved on")
+                st.write(f"**{label}:** {step['result']}")
+
             try:
                 if not agent_call_allowed():
                     raise agent.AgentError("LimitReached")
                 st.session_state["classified"] = agent.classify(clean)
-                st.write("Classified the fraud. Plain code, not the AI, decides your deadlines and amounts.")
-                log_event("Agent classified the story")
-                steps.update(state="complete")
+                st.write(f"**Read your story:** {st.session_state['classified']['fraud_type']}")
+                outcome = orchestrator.run(clean, agent_facts, live_status(), show_step)
+                st.session_state["agent_outcome"] = outcome["text"]
+                log_event("Agent finished its steps")
+                steps.update(label="Agent finished. Plain code decided every date and amount.", state="complete")
             except agent.AgentError:
-                st.session_state.pop("classified", None)
-                log_event("Agent classification failed")
-                steps.update(label="The agent is unavailable. Choose below and the rules will still work.", state="error")
+                st.session_state.pop("agent_outcome", None)
+                log_event("Agent stopped early")
+                steps.update(label="The agent could not finish. The rules below still work.", state="error")
+    if st.session_state.get("agent_outcome"):
+        st.info(st.session_state["agent_outcome"])
 
     classified = st.session_state.get("classified")
     suggested = 0

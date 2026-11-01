@@ -66,3 +66,12 @@ def test_draft_failing_fact_check_is_never_returned(letter):
 def test_not_configured_without_key(monkeypatch):
     monkeypatch.delenv("LLM_API_KEY")
     assert not agent.configured()
+
+
+def test_env_file_loads_without_overriding_hosted_secrets(monkeypatch, tmp_path):
+    env = tmp_path / ".env"
+    env.write_text('# note\nLLM_MODEL="from-file"\nLLM_API_KEY=key-from-file\n', encoding="utf-8")
+    monkeypatch.delenv("LLM_MODEL")
+    agent.load_env_file(str(env))
+    assert agent.os.environ["LLM_MODEL"] == "from-file"
+    assert agent.os.environ["LLM_API_KEY"] == "key"
