@@ -88,3 +88,8 @@ def test_every_message_exists_in_all_languages():
     from app.i18n import LANGUAGES, TEXT
 
     assert all(TEXT[key].get(language) for key in TEXT for language in LANGUAGES)
+
+
+def test_example_case_comes_from_the_engine():
+    case = rights.example_case()
+    assert case["at_risk"] == 8500 and case["paid_now"] == 0 and case["deadline"] == date(2027, 1, 6)

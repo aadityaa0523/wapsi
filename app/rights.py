@@ -140,3 +140,10 @@ def two_report_scenarios():
         ("Police on day 1, but bank on day 6", 6, 1),
     ]
     return [(name, assess(txn, NEGLIGENCE, EXAMPLE_LOSS, as_of, bank_report=day(bank), police_report=day(police))["compensation"]) for name, bank, police in cases]
+
+
+def example_case():
+    """One labelled example run through the real engine: bank told, police not, two days in."""
+    txn = NEW_REGIME
+    result = assess(txn, NEGLIGENCE, EXAMPLE_LOSS, txn + timedelta(days=2), bank_report=txn)
+    return {"txn": txn, "deadline": result["deadlines"]["Report to bank AND police"], "at_risk": result["possible"], "paid_now": result["compensation"]}

@@ -39,6 +39,8 @@ To turn the agent on, set `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY` as secre
 
 Not legal advice. Not reviewed by any bank, regulator or lawyer.
 
+The page structure (hero, then one case played through step by step, then human approval) is inspired by CrossBeam, 1st place at Anthropic's Claude Code hackathon. All code, text and calculations here are this project's own.
+
 ## Where the agent stops
 
 The portal asks the complainant to accept a legal declaration, then log in with a mobile OTP and captcha. Wapsi does none of these and never submits. It does not automate the portal: the form sits behind login, so the kit is built from the portal's notice and has not been checked against the form itself.
