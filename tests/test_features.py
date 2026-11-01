@@ -78,3 +78,7 @@ def test_decoder_cites_2027_paragraphs_under_new_rules():
 
 def test_coercion_ground_is_not_offered_under_old_rules():
     assert decoder.decode("You authorised this payment") == []
+
+
+def test_two_report_table_comes_from_the_engine():
+    assert [amount for _, amount in rights.two_report_scenarios()] == [8500, 0, 0, 0]

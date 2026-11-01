@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 
 NEW_REGIME = date(2027, 1, 1)
+REPORT_DAYS = 5
+EXAMPLE_LOSS = 10000
 COMPENSATION_ENDS = date(2028, 1, 1)
 CIRCULAR_2017 = "https://www.rbi.org.in/scripts/FS_Notification.aspx?Id=11040"
 DIRECTIONS_2026 = "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=13543&Mode=0"
@@ -52,7 +54,7 @@ def assess_2017(fault, loss, cap, alert, bank_report):
 
 
 def assess_2027(txn, fault, loss, bank_report, police_report, used_before, recovered=0):
-    deadline = txn + timedelta(days=5)
+    deadline = txn + timedelta(days=REPORT_DAYS)
     result = {
         "regime": "RBI directions effective 1 Jan 2027",
         "source": DIRECTIONS_2026,
@@ -123,4 +125,18 @@ def assess(txn, fault, loss, today, cap=10000, alert=None, bank_report=None, pol
         return result | {"warnings": []}
     result = assess_2027(txn, fault, loss, bank_report, police_report, used_before, recovered)
     needs_both = fault in (NEGLIGENCE, COERCED)
-    return result | {"warnings": dual_report_guard(txn + timedelta(days=5), bank_report, police_report, today) if needs_both else []}
+    return result | {"warnings": dual_report_guard(txn + timedelta(days=REPORT_DAYS), bank_report, police_report, today) if needs_both else []}
+
+
+def two_report_scenarios():
+    """Example cases run through the real engine, so the table changes if the rules do."""
+    txn = NEW_REGIME
+    as_of = txn + timedelta(days=30)
+    day = lambda count: None if count is None else txn + timedelta(days=count)
+    cases = [
+        ("Bank and police, both within 5 days", 5, 5),
+        ("Bank only, on the same day", 0, None),
+        ("Police only, on the same day", None, 0),
+        ("Police on day 1, but bank on day 6", 6, 1),
+    ]
+    return [(name, assess(txn, NEGLIGENCE, EXAMPLE_LOSS, as_of, bank_report=day(bank), police_report=day(police))["compensation"]) for name, bank, police in cases]

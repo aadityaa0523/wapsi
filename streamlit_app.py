@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 import streamlit as st
 
-from app import agent, checks, decoder, portal, rights
+from app import agent, checks, decoder, portal, rights, ui
 from app.i18n import LANGUAGES, TEXT
 from app.safety import SecretBlocked, append_event, chain_is_valid, proof_pack, sanitize, triage
 
@@ -48,15 +48,24 @@ def agent_call_allowed():
     return used < MAX_AGENT_CALLS
 
 
-st.set_page_config(page_title="Wapsi")
-st.title("Wapsi")
+st.set_page_config(page_title="Wapsi - Cyber Fraud Recovery Assistant", layout="centered")
+ui.page_style()
 language = st.radio("Language", LANGUAGES, horizontal=True, label_visibility="collapsed")
 st.write(TEXT["pitch"][language])
 st.error(TEXT["emergency"][language])
 st.caption(TEXT["disclaimer"][language])
 
+st.markdown('<div class="wp-section">One missing report can cost you your compensation</div>', unsafe_allow_html=True)
+st.markdown('<div class="wp-sub2">Example cases under the RBI rules from 1 January 2027, calculated live by the same engine your case uses. Your bank still decides each claim.</div>', unsafe_allow_html=True)
+ui.two_report_table()
+st.markdown('<div class="wp-section">How Wapsi works</div>', unsafe_allow_html=True)
+ui.how_it_works()
+st.markdown('<div class="wp-section">Checked against official sources</div>', unsafe_allow_html=True)
+ui.stats(live_status())
+st.markdown('<div class="wp-section">Start here</div>', unsafe_allow_html=True)
+
 today = datetime.now(IST).date()
-case_tab, kit_tab, rejected_tab, rules_tab = st.tabs(["My case", "Filing kit", "Bank rejected me", "Live rules"])
+case_tab, kit_tab, rejected_tab, rules_tab, judges_tab = st.tabs(["My case", "Filing kit", "Bank rejected me", "Live rules", "For judges"])
 
 with case_tab:
     story = st.text_area("What happened? (optional)", max_chars=4000)
@@ -237,6 +246,24 @@ with rules_tab:
     except httpx.HTTPError:
         st.warning("The RBI feed could not be reached just now.")
 
+with judges_tab:
+    st.write("A three-minute walk through the live app. No login needed.")
+    for number, step in enumerate(
+        [
+            "Look at the table at the top of the page. Change nothing, and note that one missing report takes the compensation to zero.",
+            "In My case, tick Preview, enter any loss, choose the shared OTP option, and click Check my rights. Both clocks and warnings appear. Add one report date and run it again.",
+            "In What happened, type: my otp is 482913. It is blocked and never logged.",
+            "Replace it with: I am under digital arrest. The app tells the victim to hang up, in three languages.",
+            "In Bank rejected me, paste: You shared your OTP so this is customer negligence. It cites the rule and writes the letter.",
+            "In Live rules, compare the page hashes and clause results, which are fetched live from RBI.",
+            "Download the Proof Pack, then click Delete my session data.",
+        ],
+        1,
+    ):
+        st.write(f"{number}. {step}")
+    st.write("**Where it stops on purpose:** the portal's declaration, OTP, captcha and submit button are always left to the victim, because a false complaint carries legal risk.")
+    st.write("**Known gaps:** the hard-case table, including what fails, is in the README: https://github.com/aadityaa0523/wapsi")
+
 if st.session_state.get("audit"):
     st.subheader("Tamper-evident log of this session")
     st.caption("Holds events only, never your story. Chain intact: " + str(chain_is_valid(st.session_state["audit"])))
@@ -244,3 +271,5 @@ if st.session_state.get("audit"):
     if st.button("Delete my session data"):
         st.session_state.clear()
         st.rerun()
+
+ui.footer()
